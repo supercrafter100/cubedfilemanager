@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 
+/**
+ * Imports
+ */
+
 const chokidar = require('chokidar');
+const fs = require('fs');
 
 const fetch = require('node-fetch');
 const meow = require('meow');
@@ -13,6 +18,13 @@ const chalk = require('chalk');
 const CLI = require('clui');
 const Spinner = CLI.Spinner;
 
+
+/**
+ * Start up
+ */
+
+
+// Startup message
 console.log(
 	chalk.yellow(
 	  figlet.textSync('CubedFileManager', { horizontalLayout: 'full' })
@@ -22,14 +34,15 @@ console.log(
 // Base URL
 const baseurl = "https://playerservers.com/dashboard/";
 
+// Meow
 const cli = meow(
 	`
-		Usage
+		Usagef
 			$ cfm <path> <args>
 		
 		Options
 			--session, -s  The session key (For faster starting)
-			--name, -n Say who connected with cubedSK
+			--name, -n Say who connected with CFM
 			--path, -p The path to edit (starting with "/")
 `,
 	{
@@ -48,34 +61,52 @@ const cli = meow(
 			},
 		},
 	}
-	);
-	
-	let token = "";
-	let filePath = "/plugins/Skript/scripts";
-	
-	// Asking for session token
-	if (!cli.input.length) {
-		return cli.showHelp();
-	}
-	
-	if (!cli.flags.session) {
-		return cli.showHelp();
-	}
-	
-	if (cli.flags.path) {
-		filePath = cli.flags.path
-	}
-	
+);
+
+
+/**
+ * Check CLI stuff
+ */
+
+
+let token = "";
+let filePath = "/plugins/Skript/scripts";
+
+// Asking for session token
+if (!cli.input.length) {
+	return cli.showHelp();
+}
+
+// Checking for session token
+if (!cli.flags.session) {
+	return cli.showHelp();
+}
+
+// Checking if path is set
+if (cli.flags.path) {
+	filePath = cli.flags.path
+}
+
+
+// storing token
 token = cli.flags.session;
 let headers = {
 	cookie: `PHPSESSID=${token};`,
 };
+
 
 // If the token exists we can just like assign it
 // Checking if the token is correct
 const status = new Spinner('Checking your session token. Please wait')
 status.start();
 
+
+/**
+ * Fetching
+ */
+
+
+// Fetching token via login
 fetch(baseurl, { headers })
 .then((res) => res.text())
 .then(async (html) => {
@@ -91,6 +122,8 @@ fetch(baseurl, { headers })
 	checkStatus();
 });
 
+
+// Checking if the server is online or not
 async function checkStatus() {
 	const spin = new Spinner('Checking server status. Please wait')
 	spin.start()
@@ -115,6 +148,9 @@ async function checkStatus() {
 	
 }
 
+
+// If the broadcasting script isn't in the
+// server, this will add it to the server.
 async function installBroadcaster() {
 	const spin = new Spinner('Checking for broadcasting script. Please wait')
 	spin.start()
@@ -125,7 +161,7 @@ async function installBroadcaster() {
 			spin.stop()
 			if (html === '<script data-cfasync="false">window.location.replace("/dashboard/filemanager");</script>') {
 				console.log(chalk.red('Did not find broadcast script. Creating it for you...'))
-				require('fs').readFile('./lib/script.txt', async (err, content) => {
+				fs.readFile('./lib/script.txt', async (err, content) => {
 					await create('cubedFileManager.sk', content);
 					await sendCommand(`sk enable cubedFileManager`)
 					await sendCommand(`sk reload cubedFileManager`)
@@ -139,9 +175,16 @@ async function installBroadcaster() {
 		})
 }
 
-// Watchpath stuff for file changes idk
+/**
+ * Chokidar - file watching
+ */
+
+
+// Setting path
 let watchPath = cli.input[0];
 
+
+// Setting up the watcher
 let watcher = chokidar.watch(watchPath, {
 	ignoreInitial: true,
 	awaitWriteFinish: {
@@ -149,12 +192,12 @@ let watcher = chokidar.watch(watchPath, {
 	},
 });
 
-// New file
 
+// New file
 watcher.on("add", (path) => {
 	let file = require("path").basename(path);
 
-	require("fs").readFile(path, async (err, content) => {
+	fs.readFile(path, async (err, content) => {
 		await create(file, content);
 		if (!cli.flags.path) {
 			await sendCommand(`sk enable ${file}`)
@@ -168,11 +211,11 @@ watcher.on("add", (path) => {
 	});
 });
 
-// Saved file
 
+// Saved file
 watcher.on("change", async (path) => {
 	let file = require("path").basename(path);
-	require("fs").readFile(path, async (err, content) => {
+	fs.readFile(path, async (err, content) => {
 
 		// Checking if the file already exists or not
 		fileExists(file).then(async (res) => {
@@ -200,6 +243,7 @@ watcher.on("change", async (path) => {
 	});
 });
 
+
 // Deleted file
 watcher.on("unlink", async (path) => {
 	let file = require("path").basename(path);
@@ -213,8 +257,8 @@ watcher.on("unlink", async (path) => {
 });
 
 
-// Create file function
 
+// Create file function
 async function create(name, content = "") {
 	const spin = new Spinner(`Creating file ${name}...`);
 	spin.start();
@@ -250,6 +294,7 @@ async function create(name, content = "") {
 			});
 		})
 }
+
 
 // Edit file function
 async function edit(name, content) {
@@ -289,8 +334,8 @@ async function edit(name, content) {
 		})
 }
 
-// Delete file function
 
+// Delete file function
 async function remove(name) {
 	const spin = new Spinner(`Deleting file ${name}...`);
 	spin.start();
@@ -311,6 +356,8 @@ async function remove(name) {
 	});
 }
 
+
+// send a command to the console of the playerserver
 async function sendCommand(command) {
 	const params = new URLSearchParams();
 	params.append("sendcmd", command);
