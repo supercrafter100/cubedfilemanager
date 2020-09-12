@@ -43,7 +43,8 @@ const cli = meow(
 		Options
 			--session, -s  The session key (For faster starting)
 			--name, -n Say who connected with CFM
-			--path, -p The path to edit (starting with "/")
+			--path, -p The path to edit (starting with "/"),
+			--autoreload, -ar Disable automatically reloading files when saved
 `,
 	{
 		flags: {
@@ -59,6 +60,10 @@ const cli = meow(
 				type: "string",
 				alias: "p",
 			},
+			autoreload: {
+				type: "string",
+				alias: "ar",
+			},
 		},
 	}
 );
@@ -67,7 +72,6 @@ const cli = meow(
 /**
  * Check CLI stuff
  */
-
 
 let token = "";
 let filePath = "/plugins/Skript/scripts";
@@ -234,8 +238,14 @@ watcher.on("change", async (path) => {
 				await edit(file, content);
 				await sendCommand(`sendmsgtoops &e${cli.flags.name ? cli.flags.name : ""} &fSaved file &b${file}`);
 				if (!cli.flags.path) {
-					await sendCommand(`sk reload ${file}`);
-					await sendCommand(`sendmsgtoops &e${cli.flags.name ? cli.flags.name : ""} &fReloaded file &b${file}`);
+					/* 
+					If autoreloads are undefined that means
+					their enabled.
+					*/
+					if (!cli.flags.autoreload) {
+						await sendCommand(`sk reload ${file}`);
+						await sendCommand(`sendmsgtoops &e${cli.flags.name ? cli.flags.name : ""} &fReloaded file &b${file}`);
+					}
 				}
 			}
 		})
