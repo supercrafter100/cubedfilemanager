@@ -9,7 +9,7 @@ command /sendmsgtoops [<string>]:
                 loop all players:
                     if loop-player has permission "core.staff":
                         send "" to loop-player
-                        send "&7[&dSystem&7]: &f%arg-1%&7. &7&o(%now%)" to loop-player
+                        send "&7[&dSystem&7]: &f%colored arg-1%&7. &7&o(%now%)" to loop-player
                         send "" to loop-player                                                
             else:
                 send "&cUsage: /sendmsgtoops <msg>."                        
