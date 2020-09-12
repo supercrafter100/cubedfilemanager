@@ -154,7 +154,8 @@ async function checkStatus() {
 async function installBroadcaster() {
 	const spin = new Spinner('Checking for broadcasting script. Please wait')
 	spin.start()
-	const url = 'https://playerservers.com/dashboard/filemanager/&action=edit&medit=/plugins/Skript/scripts/cubedFileManager.sk&dir=/plugins/Skript/scripts'
+	const url = 'https://playerservers.com/dashboard/filemanager/&action=edit&medit=/plugins/Skript/scripts/cubedFileManager
+	&dir=/plugins/Skript/scripts'
 	fetch(url, { headers })
 	.then((res) => res.text())
 		.then(async (html) => {
@@ -172,7 +173,14 @@ async function installBroadcaster() {
 			} else {
 				console.log(chalk.blue(baseurl))
 			}
-		})
+		}).catch(err => {
+			/*
+			The .sk file sometimes may not load, this happened to me so might aswell
+			put some error handling for that.
+			- Tech
+			*/
+			console.log(chalk.red('There was an error trying to create cubedFileManager.sk for your server.'))
+		}
 }
 
 /**
