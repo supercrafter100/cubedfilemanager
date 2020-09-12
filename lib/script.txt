@@ -1,5 +1,6 @@
 # Made for cubedfilemanager (npm package)
 # Idc what you do with it but its needed for the system to work propperly
+# Originally created by DebitCardz.
 
 command /sendmsgtoops [<string>]:
     trigger:
