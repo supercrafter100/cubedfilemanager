@@ -53,17 +53,8 @@ You can report issues to me by sending me a dm in discord (Supercrafter100#6600)
 
 ## Changelog
 
-version 2.0.0:
+version 2.0.1:
 
-- Revamped the complete code
-- Added a function so you don't have to grab the cookie yourself
-- Added folder support (--fs or --foldersupport)
-- Removed the function that auto creates the file on your manager if it doesnt exist yet
+- Added a function to save your username and password. It will ask if you want to do this when you entered your credentials
 
-- If you want it to auto log you in, you can go to the place where this package is saved, and add a .env file containing the following: 
-
-```bash
-USER=yourusernametologinwith
-PASS=yourpassword
-```
 

@@ -7,28 +7,23 @@ module.exports = (query) => {
 			input: process.stdin,
 			output: process.stdout
 		});
-		const stdin = process.openStdin();
-		process.stdin.on('data', char => {
-			char = char + '';
-			switch (char) {
-				case '\n':
-				case '\r':
-				case '\u0004':
-					stdin.pause();
-					break;
-				default:
-					process.stdout.clearLine();
-					readline.cursorTo(process.stdout, 0);
-					process.stdout.write(" " + chalk.bold(query) + Array(rl.line.length + 1).join('*'));
-					break;
+		
+		rl.input.on('keypress', (c, k) => {
+
+			let len = rl.line.length;
+
+			readline.moveCursor(rl.output, -len, 0);
+			readline.clearLine(rl.output, 1);
+
+			for (let i = 0; i < len; i++) {
+				rl.output.write("*");
 			}
-		});
+		})
 
 		const q = " " + chalk.bold(query);
 
 		rl.question(q, value => {
 
-			stdin.end();
 			rl.history = rl.history.slice(1);
 			rl.close();
 	  		resolve(value);

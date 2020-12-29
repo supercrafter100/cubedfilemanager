@@ -1,0 +1,19 @@
+#
+# THIS MODULE IS IF YOU USE CubedFileManager
+# 
+# Renaming this file will lead to the system remaking it with the same name as before
+#
+
+command /sendmsgtoops [<string>]:
+    trigger:
+        if executor has permission "core.admin":
+            if arg-1 is set:
+                loop all players:
+                    if loop-player has permission "core.staff":
+                        send "" to loop-player
+                        send "&7[&dSystem&7]: &f%arg-1%&7. &7&o(%now%)" to loop-player
+                        send "" to loop-player                                                
+            else:
+                send "&cUsage: /sendmsgtoops <msg>."                        
+        else:
+            send "&cYou are lacking the requried permissions to execute this command."

@@ -21,6 +21,11 @@ let watcher = chokidar.watch(watchPath, {
 	},
 });
 
+watcher.on('error', (e) => {
+	console.log(e);
+	process.exit();
+});
+
 watcher.on("ready", () => {
 	spin.stop();
 	if (!cli.flags.name){

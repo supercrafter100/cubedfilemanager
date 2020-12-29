@@ -7,17 +7,31 @@ const inquirer = require('inquirer');
 const hiddenQuestion = require('../questionTypes/hiddenQuestion');
 const normalQuestion = require('../questionTypes/normalQuestion');
 
+const configStorage = require('../authentication/config');
+
 module.exports = async () => {
 	return new Promise(async (resolve) => {
 		let userName;
 		let password;
 
+		let credentials = configStorage.readData()
+
 		if (process.env.USER && process.env.PASS) {
 			userName = process.env.USER;
 			password = process.env.PASS;
+		} else if (credentials) {
+			userName = credentials.username;
+			password = credentials.password;
 		} else {
 			userName = await normalQuestion('What is your username? ');
 			password = await hiddenQuestion('What is your password? ');
+
+			// Promting if they want to save their data
+
+			const save = await normalQuestion('Do you want to save these credentials (encrypted)? (Yes / No) ');
+			if (save.toLowerCase() === "yes") {
+				configStorage.writeData(userName, password)
+			}
 		}
 	
 		/**
