@@ -26,29 +26,29 @@ module.exports = async () => {
 	
 		const url = 'https://playerservers.com/login';
 		await fetch(url)
-		.then(async (res) => {
-			const html = await res.text();
-			const $ = cheerio.load(html);
-			const requestToken = $("input[name=token]").val();
+			.then(async (res) => {
+				const html = await res.text();
+				const $ = cheerio.load(html);
+				const requestToken = $("input[name=token]").val();
 
-			const cookie = res.headers
-    		.raw()
-    		["set-cookie"].find((s) => s.startsWith("PHPSESSID"))
-    		.split(";")[0]
-			.split("=")[1];
-	
-			const params = new URLSearchParams();
-			params.append('username', userName);
-			params.append('password', password);
-			params.append('token', requestToken);
-	
-			const success = await fetch(url, {
-				method: 'POST',
-				body: params,
-				headers: {
-					cookie: `PHPSESSID=${cookie};`
-				}
-			})
+				const cookie = res.headers
+				.raw()
+				["set-cookie"].find((s) => s.startsWith("PHPSESSID"))
+				.split(";")[0]
+				.split("=")[1];
+		
+				const params = new URLSearchParams();
+				params.append('username', userName);
+				params.append('password', password);
+				params.append('token', requestToken);
+		
+				const success = await fetch(url, {
+					method: 'POST',
+					body: params,
+					headers: {
+						cookie: `PHPSESSID=${cookie};`
+					}
+				})
 			.then((res) => res.text())
 			.then((html) => html.includes(`replace("/dashboard/")`))
 			.catch(e => console.log(e));
@@ -103,19 +103,27 @@ async function getServers(token) {
 				links.push({ name: name, href: href })
 			}
 
-			const { server_name } = await inquirer.prompt([
-				{
-					name: "server_name",
-					prefix: "",
-					type: "list",
-					pageSize: 5,
-					message: "What server are you working on?",
-					loop: false,
-					choices: names,
-				},
-			])
+			let server_name
 
-			const server = links.filter(c => c.name === server_name)[0];
+			if(process.env.SERVER) 
+				server_name = process.env.SERVER
+			else
+				server_name = await inquirer.prompt([
+					{
+						name: "server_name",
+						prefix: "",
+						type: "list",
+						pageSize: 5,
+						message: "What server are you working on?",
+						loop: false,
+						choices: names,
+					},
+				]).then(o=>o.server_name)
+
+
+			const server = links.find(c => c.name.toLowerCase() === server_name.toLowerCase());
+
+			if(!server) throw new Error('Server not found')
 
 			/**
 			 * Final fetch to let the server know we selected a server

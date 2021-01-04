@@ -65,5 +65,8 @@ version 2.0.0:
 ```bash
 USER=yourusernametologinwith
 PASS=yourpassword
+
+#	optional
+SERVER=yourserver
 ```
 
