@@ -13,8 +13,6 @@ const meow = require('meow');
 const figlet = require('figlet');
 const chalk = require('chalk');
 
-const CLI = require('clui');
-const Spinner = CLI.Spinner;
 const getToken = require('./request/getToken');
 
 const createBroadcaster = require('./request/installScript');
