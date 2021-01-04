@@ -57,4 +57,16 @@ version 2.0.1:
 
 - Added a function to save your username and password. It will ask if you want to do this when you entered your credentials
 
+<<<<<<< HEAD
+=======
+- If you want it to auto log you in, you can go to the place where this package is saved, and add a .env file containing the following: 
+
+```bash
+USER=yourusernametologinwith
+PASS=yourpassword
+
+#	optional
+SERVER=yourserver
+```
+>>>>>>> c0704fa10a1a0062f72c5560cc6fd87af545e508
 
