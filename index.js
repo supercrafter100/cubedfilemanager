@@ -14,6 +14,7 @@ const figlet = require('figlet');
 const chalk = require('chalk');
 
 const getToken = require('./request/getToken');
+const getInput = require('./request/getInput');
 
 const createBroadcaster = require('./request/installScript');
 const checkSession = require('./request/checkSession');
@@ -76,17 +77,23 @@ if (!cli.flags.session) {
 }
 
 async function stuff() {
-	await getToken()
-	.then(async (token) => {
-		headers = {
-			cookie: `PHPSESSID=${token};`
-		};
-		cookie = token;
 
-		await createBroadcaster();
-		
-		require('./watcher/watcher')
+	// Automatic login stuff xd
+	const input = await getInput()
+	.then(async (response) => {
+		await getToken(response)
+		.then(async (token) => {
+			headers = {
+				cookie: `PHPSESSID=${token};`
+			};
+			cookie = token;
+	
+			await createBroadcaster();
+			
+			require('./watcher/watcher')
+		})
 	})
+
 }
 	
 if (cli.flags.session) {
