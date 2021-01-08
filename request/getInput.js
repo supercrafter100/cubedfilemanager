@@ -11,8 +11,8 @@ module.exports = () => {
 		 */
 
 		const userData = configStorage.readData();
-		if (!userData.username || !userData.password) {
-			resolve("manual");
+		if (userData === null) {
+			return resolve("manual");
 		}
 		
 		const choices = [
@@ -39,11 +39,11 @@ module.exports = () => {
 			const password = await hiddenQuestion('What is your password? ');
 
 			configStorage.writeData(userName, password);
-			resolve("auto")
+			return resolve("auto")
 		} else if (startup_choice == `Log in as ${userData.username}`) {
-			resolve("auto")
+			return resolve("auto")
 		} else {
-			resolve("manual");
+			return resolve("manual");
 		}
 	})
 }
