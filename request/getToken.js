@@ -104,7 +104,7 @@ async function getServers(token) {
 
 			})
 
-			$('tr > td:nth-child(5) > a').each((index, element) => {
+			$('tr > td:nth-child(6) > a').each((index, element) => {
 
 				let href = $(element).attr('href');
 				hrefs.push(href);

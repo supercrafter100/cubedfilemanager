@@ -1,12 +1,11 @@
 const cryptoJS = require('crypto-js');
-const encryptionKey = "cubedfilemanagerEncryptionKey";
 
-function decryptData(data) {
+function decryptData(data, encryptionKey) {
 	const bytes = cryptoJS.AES.decrypt(data, encryptionKey)
 	return bytes.toString(cryptoJS.enc.Utf8);
 }
 
-function encryptData(data) {
+function encryptData(data, encryptionKey) {
 	return cryptoJS.AES.encrypt(data, encryptionKey).toString();
 }
 

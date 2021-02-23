@@ -42,7 +42,7 @@ const cli = meow(
 			--session, -s  The session key (For faster starting)
 			--name, -n Say who connected with CFM
 			--folderSupport, -fs Enables folder suppor (creates folders in your file manager depending on your folders in here)
-			
+			--logerrors Shows all data returned by the console when reloading a file.
 `,
 	{
 		flags: {
@@ -57,6 +57,10 @@ const cli = meow(
 			folderSupport: {
 				type: "boolean",
 				alias: "fs"
+			},
+			logerrors: {
+				type: "boolean",
+				alias: "logerr"
 			}
 		},
 	}
@@ -68,6 +72,7 @@ const cli = meow(
  */
 let headers;
 let cookie;
+let logstuff = cli.flags.logerrors;
 
 
 // storing token
@@ -79,7 +84,7 @@ if (!cli.flags.session) {
 async function stuff() {
 
 	// Automatic login stuff xd
-	const input = await getInput()
+	await getInput()
 	.then(async (response) => {
 		await getToken(response)
 		.then(async (token) => {
@@ -113,6 +118,10 @@ module.exports = {
 
 	getToken() {
 		return cookie;
+	},
+
+	getErrorLog() {
+		return logstuff;
 	}
 }
 async function stuff2() {

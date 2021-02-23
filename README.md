@@ -25,7 +25,11 @@ If you dont want to get the PHPSESSID yourself, you can start the system with
 cfm . 
 ```
 
-This will ask your for your login details and what server you wish to work on.
+If you are starting the system for the first time it will instantly promt your login details. After you entered them it will ask you if you want to save the credentials. These credentials are saved encrypted to make sure they cannot be easily stolen by a different system.
+
+A unique encryption key is generated once you start the software, so even if you leak the details they still cannot do anything without the encryption key.
+
+If you have your credentials saved and start the system, it will ask if you want to log in with those credentials, change the credentials or log in with a different account.
 
 
 #### Starting by grabbbing the cookie yourself.
@@ -53,20 +57,12 @@ You can report issues to me by sending me a dm in discord (Supercrafter100#6600)
 
 ## Changelog
 
-version 2.0.1:
+version 2.0.9:
 
-- Added a function to save your username and password. It will ask if you want to do this when you entered your credentials
-
-<<<<<<< HEAD
-=======
-- If you want it to auto log you in, you can go to the place where this package is saved, and add a .env file containing the following: 
+- Added an error logger for files. To enable it, add the flag `--logerrors=true` to your start command. For example
 
 ```bash
-USER=yourusernametologinwith
-PASS=yourpassword
-
-#	optional
-SERVER=yourserver
+cfm . --logerrors=true
 ```
->>>>>>> c0704fa10a1a0062f72c5560cc6fd87af545e508
+
 
