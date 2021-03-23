@@ -36,12 +36,7 @@ class fileUploader extends emitter {
 			else {
 				const contents = fs.readFileSync(file);
 
-				let fileN = files[i];
-				const fileExtension = getFileExtension(fileN);
-				const replacement = "." + fileExtension;
-				const fileName = fileN.replace(replacement, "");
-
-				await uploadFile(fileName, contents);
+				await uploadFile(files[i], contents);
 				this.emit('upload', files[i]);
 			}
 		}
