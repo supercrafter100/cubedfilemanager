@@ -26,6 +26,7 @@
     "meow": "^7.1.1",
     "node-fetch": "^2.6.1",
     "path": "^0.12.7",
+    "update-notifier": "^5.1.0",
     "url": "^0.11.0"
   },
   "bin": {

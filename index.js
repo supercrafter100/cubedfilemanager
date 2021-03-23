@@ -6,7 +6,9 @@
 
 require('dotenv').config();
 
-const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
+
 const meow = require('meow');
 
 
@@ -19,6 +21,8 @@ const getInput = require('./request/getInput');
 const createBroadcaster = require('./request/installScript');
 const checkSession = require('./request/checkSession');
 
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, './package.json')));
+require('update-notifier')({ pkg }).notify();
 
 /**
  * Start up
@@ -43,6 +47,7 @@ const cli = meow(
 			--name, -n Say who connected with CFM
 			--folderSupport, -fs Enables folder suppor (creates folders in your file manager depending on your folders in here)
 			--logerrors Shows all data returned by the console when reloading a file.
+			--upload Upload all your files in your directory to the server.
 `,
 	{
 		flags: {
@@ -61,6 +66,10 @@ const cli = meow(
 			logerrors: {
 				type: "boolean",
 				alias: "logerr"
+			},
+			upload: {
+				type: "boolean",
+				alias: "u"
 			}
 		},
 	}
@@ -95,7 +104,14 @@ async function stuff() {
 	
 			await createBroadcaster();
 			
-			require('./watcher/watcher')
+			if (cli.flags.upload) {
+				const uploader = require('./methods/uploadWorkspace');
+				const upload = new uploader();
+
+				upload.load({ loadDir: cli.input[0] })
+			} else {
+				require('./watcher/watcher');
+			}
 		})
 	})
 
