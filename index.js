@@ -21,7 +21,7 @@ const getInput = require('./request/getInput');
 const createBroadcaster = require('./request/installScript');
 const checkSession = require('./request/checkSession');
 
-const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, './package.json')));
+const pkg = require('./package.json');
 require('update-notifier')({ pkg }).notify();
 
 /**
@@ -39,15 +39,18 @@ console.log(
 // Meow
 const cli = meow(
 	`
-		Usagef
+		Usage
 			$ cfm <path> <args>
+		
+		
 		
 		Options
 			--session, -s  The session key (For faster starting)
 			--name, -n Say who connected with CFM
 			--folderSupport, -fs Enables folder suppor (creates folders in your file manager depending on your folders in here)
-			--logerrors Shows all data returned by the console when reloading a file.
-			--upload Upload all your files in your directory to the server.
+			--logerrors, -logerr Shows all data returned by the console when reloading a file.
+			-upload Upload all your files in your directory to scripts directory of the server.
+			-delete Delete all the files from the scripts directory of the server
 `,
 	{
 		flags: {
@@ -76,6 +79,10 @@ const cli = meow(
 );
 
 
+if (process.argv.includes('-help')) {
+	cli.showHelp();
+}
+
 /**
  * Check CLI stuff
  */
@@ -101,10 +108,15 @@ async function stuff() {
 				cookie: `PHPSESSID=${token};`
 			};
 			cookie = token;
-	
+			
+			if (cli.flags.delete || process.argv.includes('--delete') || process.argv.includes('-delete')) {
+				await require('./methods/deleteAllScripts')();
+				return;
+			}
+
 			await createBroadcaster();
 			
-			if (cli.flags.upload) {
+			if (cli.flags.upload || process.argv.includes('--upload') || process.argv.includes('--u') || process.argv.includes('-u') || process.argv.includes('--upload')) {
 				const uploader = require('./methods/uploadWorkspace');
 				const upload = new uploader();
 

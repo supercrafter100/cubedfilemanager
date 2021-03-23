@@ -56,13 +56,38 @@ When creating / saving / deleting a file, it will do the same on your file manag
 You can report issues to me by sending me a dm in discord (Supercrafter100#6600). I am always open for suggestions for it.
 
 ## Changelog
+version 2.0.13:
 
-version 2.0.9:
-
-- Added an error logger for files. To enable it, add the flag `--logerrors=true` to your start command. For example
+- Added a way to delete all files on the file manager in the scripts directory. You can use this feature by adding the tag -delete to the arguments.
 
 ```bash
-cfm . --logerrors=true
+cfm . -delete
+```
+
+- Changed the auto upload tag to --upload. So no need to add the =true to the flag.
+- When doing adding the flag -help, it will display the help page of cfm
+
+```bash
+cfm -help
+```
+
+- Some miscellaneous bug fixes
+
+version 2.0.12:
+
+- Fixed the update checker (I think)
+
+version 2.0.11:
+
+- Fixed an issue with the uploading
+
+version 2.0.10:
+
+- Added an update checker in case a new version got released
+- When using --upload=true, it will now upload all the files in your current directory and directories that are linked to it to the server.
+
+```bash
+cfm . --upload=true
 ```
 
 

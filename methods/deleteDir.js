@@ -10,7 +10,6 @@ module.exports = (rawPath) => {
 		
 		if (cli.flags.folderSupport) {
 
-			
 			let normalpath = rawPath.split('\\')
 			let dir = normalpath[normalpath.length - 1]
 			let ppath = await normalpath.slice(0, normalpath.length - 1).join('/');
@@ -22,8 +21,19 @@ module.exports = (rawPath) => {
 			spin.start()
 			await fetch(url, { headers })
 			.then(() => {
-				log(`Deleted folder ${dir}`);
 				spin.stop();
+				log(`Deleted folder ${dir}`);
+				resolve();
+			})
+		} else {
+			const spin = new Spinner('Deleting folder ' + rawPath);
+
+			const url = `https://playerservers.com/dashboard/filemanager/&action=delete&delete=/plugins/Skript/scripts/${rawPath}&dir=/plugins/Skript/scripts`;
+			spin.start();
+			await fetch(url, { headers })
+			.then(() => {
+				spin.stop();
+				log(`Deleted folder ${rawPath}`);
 				resolve();
 			})
 		}
