@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 
 const emitter = require('events');
-const uploadFile = require('./create');
+const uploadFile = require('../create');
 
 class fileUploader extends emitter {
 

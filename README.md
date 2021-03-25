@@ -56,7 +56,17 @@ When creating / saving / deleting a file, it will do the same on your file manag
 You can report issues to me by sending me a dm in discord (Supercrafter100#6600). I am always open for suggestions for it.
 
 ## Changelog
-version 2.0.13:
+version 2.0.15:
+
+- Added the option to synchronise files between the file manager and your machine. It will create folders if needed and edit files with the new content if it already exists. (THIS WILL OVERRIDE OTHER PROGRESS!!) You can use this feature by adding the tag `-sync` to your input flags. After logging in and selecting your server it will start the sync process.
+
+```bash
+cfm . -sync
+```
+
+- Added an alias for `-help` you can now bring up the help menu by adding the flag `-h`
+
+version 2.0.14:
 
 - Added a way to delete all files on the file manager in the scripts directory. You can use this feature by adding the tag -delete to the arguments.
 
@@ -70,7 +80,6 @@ cfm . -delete
 ```bash
 cfm -help
 ```
-
 - Some miscellaneous bug fixes
 
 version 2.0.12:

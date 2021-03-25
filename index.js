@@ -51,6 +51,7 @@ const cli = meow(
 			--logerrors, -logerr Shows all data returned by the console when reloading a file.
 			-upload Upload all your files in your directory to scripts directory of the server.
 			-delete Delete all the files from the scripts directory of the server
+			-sync Synchronise all files from the file manager to your machine (will work with folders if there are any in the file manager)
 `,
 	{
 		flags: {
@@ -73,13 +74,17 @@ const cli = meow(
 			upload: {
 				type: "boolean",
 				alias: "u"
+			},
+			sync: {
+				type: 'boolean',
+				alias: "synchronise"
 			}
 		},
 	}
 );
 
 
-if (process.argv.includes('-help')) {
+if (process.argv.includes('-help') || process.argv.includes('-h')) {
 	cli.showHelp();
 }
 
@@ -110,14 +115,22 @@ async function stuff() {
 			cookie = token;
 			
 			if (cli.flags.delete || process.argv.includes('--delete') || process.argv.includes('-delete')) {
-				await require('./methods/deleteAllScripts')();
+				await require('./methods/misc/deleteAllScripts')();
+				return;
+			}
+
+			if (cli.flags.sync || process.argv.includes('--sync') || process.argv.includes('-sync')) {
+				const synchroniser = require('./methods/misc/synchroniseScripts');
+				const sync = new synchroniser();
+
+				await sync.load({ loadDir: '/', saveDir: cli.input[0], headers: headers });
 				return;
 			}
 
 			await createBroadcaster();
 			
 			if (cli.flags.upload || process.argv.includes('--upload') || process.argv.includes('--u') || process.argv.includes('-u') || process.argv.includes('--upload')) {
-				const uploader = require('./methods/uploadWorkspace');
+				const uploader = require('./methods/misc/uploadWorkspace');
 				const upload = new uploader();
 
 				upload.load({ loadDir: cli.input[0] })

@@ -2,9 +2,9 @@ const cheerio = require('cheerio');
 const fetch = require('node-fetch');
 const chalk = require('chalk');
 
-const remove = require('./remove');
-const removeDir = require('./deleteDir');
-const isOnline = require('../request/isOnline');
+const remove = require('../remove');
+const removeDir = require('../deleteDir');
+const isOnline = require('../../request/isOnline');
 module.exports = async () => {
 
 
@@ -13,7 +13,7 @@ module.exports = async () => {
 		process.exit();
 	}
 
-	const headers = require('../index').getHeaders();
+	const headers = require('../../index').getHeaders();
 
 	// Request the html of the page, so we can get all the scripts on the server
 	const url = 'https://playerservers.com/dashboard/filemanager/&dir=/plugins/Skript/scripts';
