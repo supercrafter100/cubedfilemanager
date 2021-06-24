@@ -35,7 +35,7 @@ watcher.on("ready", () => {
 		sendCommand(`sendmsgtoops &e${cli.flags.name} &fConnected with &bCubedFileManager`)
 	}
 	
-	console.log(chalk.blue('https://playerservers.com/dashboard'))
+	console.log(chalk.blue('Success! Manage server - https://playerservers.com/dashboard'))
 })
 
 
