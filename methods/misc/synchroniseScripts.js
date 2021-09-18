@@ -30,43 +30,19 @@ class fileDownloader extends emitter {
 	async downloadFiles(dir, headers) {
 		// Get the files
 
-		const files = [];
-		const folders = [];
+		const url = `https://playerservers.com/queries/list_files/?dir=/plugins/Skript/scripts${dir}`;
+		const json = await fetch(url, { headers }).then((res) => res.json());
 
-		const url = `https://playerservers.com/dashboard/filemanager/&dir=/plugins/Skript/scripts${dir}`;
-		const html = await fetch(url, { headers }).then((res) => res.text());
-
-		const $ = cheerio.load(html);
-		$('body > div > div > section > div > div > div > div > table > tbody > tr').each(async (index, element) => {
-			const text = $(element).children('td:nth-child(1)').text();
-			const split = text.split(' ');
-	
-			const i = $(element).children('td:nth-child(1)').children('a').children('i');
-			const isFolder = i.hasClass('fa-folder');
-			// console.log(isFolder)
-			
-			const fileName = split.slice(0, split.length - 3).join(' ').trim();
-			if (fileName.length > 0) {
-				if (isFolder) {
-					folders.push(fileName);
-				} else {
-					if (!fileName.startsWith('-')) {
-						files.push(fileName)
-					}
-				}
-			}
-		});
-
-		for (const file of files) {
-			const contents = await getFileContents(dir, file, headers);
+		for (const file of json.files) {
+			const contents = await getFileContents(dir, file.filename, headers);
 			const p = path.join(this.saveDir, '.', dir);
 
 			await fs.promises.mkdir(p, { recursive: true });
-			fs.writeFileSync(path.join(p, file), contents);
+			fs.writeFileSync(path.join(p, file.filename), contents);
 		}
 
-		for (const dir2 of folders) {
-			await this.downloadFiles(`${dir}${dir2}/`, headers);
+		for (const folder of json.folders) {
+			await this.downloadFiles(`${dir}/${folder.foldername}/`, headers);
 		}
 	}
 }
