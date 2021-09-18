@@ -45,11 +45,11 @@ async function checkDirectory(dir) {
 	return new Promise(async (resolve) => {
 		const headers = require('../index').getHeaders();
 		
-		const url = `https://playerservers.com/dashboard/filemanager/&dir=/plugins/Skript/scripts${dir}`;
+		const url = `https://playerservers.com/queries/list_files/?dir=/plugins/Skript/scripts${dir}`;
 		await fetch(url, { headers })
-		.then((res) => res.text())
-		.then(async (html) => {
-			if (html.includes(`window.location.replace("/dashboard/filemanager")`)) {
+		.then((res) => res.json())
+		.then(async (json) => {
+			if (json.error) {
 				resolve(false);
 			}
 			resolve(true);
