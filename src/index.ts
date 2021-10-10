@@ -45,7 +45,7 @@ let path;
 if (!(process.argv[2] == basename(process.argv[0])) && !process.argv.includes('-help') && !process.argv.includes('--help')) {
 	argv = minimist(process.argv.slice(2));
 	path = process.cwd();
-} else if (process.argv.includes('-help') || process.argv.includes('--help')) {
+} else if (process.argv.includes('-help') || process.argv.includes('--help') || process.argv.includes('-h') || process.argv.includes('--h')) {
 	console.log(helpMessage);
 	process.exit(0);
 } else {
