@@ -54,7 +54,7 @@ function getFileContents(path, file, headers) {
 		const html = await fetch(url, { headers }).then((res) => res.text());
 
 		const $ = cheerio.load(html);
-		const contents = $('#edit-file-content').text();
+		const contents = $('#code').text();
 		resolve(contents);
 	})
 }
