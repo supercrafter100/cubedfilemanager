@@ -10,9 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 10
+      - uses: actions/setup-node@v2
       - run: npm install -D
       - run: npx tsc
       - uses: JS-DevTools/npm-publish@v1
