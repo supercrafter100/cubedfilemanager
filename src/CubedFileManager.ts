@@ -9,6 +9,9 @@ import { LoginMethods } from "./types/LoginTypes";
 import normalQuestion from "./questions/normalQuestion";
 import hiddenQuestion from "./questions/hiddenQuestion";
 import Utility from "./lib/Utility";
+import FileUploader from "./util/uploadScriptToDashboard";
+import FileDownloader from "./util/syncScriptsToLocal";
+import deleteScriptsFolder from "./util/deleteScriptsFolder";
 
 export default class CubedFileManager {
 
@@ -70,7 +73,7 @@ export default class CubedFileManager {
 		} 
 
 		if (this.arguments.name || this.arguments.n || this.settingsManager.settings?.username) {
-			this.username = (this.arguments.name || this.arguments.n);
+			this.username = (this.arguments.name || this.arguments.n || this.settingsManager.settings?.username);
 		}
 
 		if (this.arguments.logerrors || this.arguments.logerr || this.settingsManager.settings?.logErrors) {
@@ -154,7 +157,7 @@ export default class CubedFileManager {
 				this.message_error("Specified server in CubedCraft.json was not found.");
 			} else {
 				const id = servers_list.find(c => c.name.toLowerCase() == this.settingsManager.settings?.server?.toLowerCase())?.id!
-				this.requestManager.selectServer(id);
+				await this.requestManager.selectServer(id);
 				this.temp_server = id;
 
 				server_selected = true;
@@ -180,6 +183,32 @@ export default class CubedFileManager {
 		}
 
 		this.message_success(`Successfully selected a server to work on`);
+
+		// Identify if the server is offline, because some major features won't work if this is the case
+		const console_output = await this.requestManager.getConsoleContent();
+		if (console_output == "The server is offline, Please start the server first") {
+			this.message_warning("The server has been identified as offline, be aware that not all features will work when this is the case.")
+		}
+
+		// Check if any special methods were inputted
+		if (this.arguments.upload) {
+			this.message_info("Starting to upload all local scripts to the server...");
+			const uploader = new FileUploader(this);
+			await uploader.uploadsFiles(this.rootDir);
+			process.exit(0);
+		}
+		else if (this.arguments.sync) {
+			this.message_info("Starting to download all scripts from the server...");
+			const downloader = new FileDownloader(this);
+			await downloader.downloadFiles("");
+			process.exit(0);
+		} else if (this.arguments.delete) {
+			this.message_info("Deleting all scripts in the scripts folder...");
+			await deleteScriptsFolder(this);
+			process.exit(0);
+		}
+
+		// Starting file watcher
 		this.fileWatcher.init();
 	}
 
@@ -263,11 +292,15 @@ export default class CubedFileManager {
 		console.log(chalk.grey('[') + chalk.redBright("x") + chalk.grey("]") + " " + msg);
 	}
 
+	public message_warning(msg: string) {
+		console.log(chalk.grey('[') + chalk.yellow("!") + chalk.grey("]") + " " + msg);
+	}
+
 	public message_info(msg: string) {
 		console.log(chalk.grey('[') + chalk.yellowBright("*") + chalk.grey("]") + " " + msg);
 	}
 
 	public message_log(msg: string) {
-		console.log(chalk.grey(`[ `) + chalk.blue(`${new Date(Date.now()).toLocaleTimeString()}`) + chalk.grey(' ]') + " " + msg);
+		console.log(chalk.grey(`[`) + chalk.blue(`${new Date(Date.now()).toLocaleTimeString()}`) + chalk.grey(']') + " " + msg);
 	}
 }

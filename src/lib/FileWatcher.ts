@@ -20,6 +20,8 @@ export default class FileWatcher {
 
 		const watcher = chokidar.watch(this.instance.rootDir, {
 			ignoreInitial: true,
+			ignorePermissionErrors: true,
+			
 			awaitWriteFinish: {
 				stabilityThreshold: 1000
 			}
@@ -51,12 +53,12 @@ export default class FileWatcher {
 			
 			// Folder support
 			if (this.instance.folderSupport) {
-				await this.instance.utilities.parseFolders(path);
+				await this.instance.utilities.parseFolders(this.preparePath(path));
 			}
 
 			// Create the file
-			await this.instance.requestManager.createFile(file, content, path);
-		})
+			await this.instance.requestManager.createFile(file, content, this.preparePath(path));
+		});
 
 		watcher.on('change', async (path) => {
 			const file = p.basename(path);
@@ -71,11 +73,49 @@ export default class FileWatcher {
 
 			// Folder support
 			if (this.instance.folderSupport) {
-				await this.instance.utilities.parseFolders(path);
+				await this.instance.utilities.parseFolders(this.preparePath(path));
 			}
 
 			// Edit file
-			await this.instance.requestManager.editFile(file, content, path);
+			await this.instance.requestManager.editFile(file, content, this.preparePath(path));
+		});
+
+		watcher.on('unlink', async (path) => {
+			const file = p.basename(path);
+			const isSkript = file.endsWith('.sk');
+			if (!isSkript) return;
+
+			// Check session
+			await this.instance.requestManager.checkAndUpdateSession();
+
+			// Delete file
+			await this.instance.requestManager.removeFile(file, this.preparePath(path));
+		});
+
+		watcher.on('unlinkDir', async (path) => {
+			const dir = p.basename(path);
+
+			// Check session
+			await this.instance.requestManager.checkAndUpdateSession();
+
+			// Delete folder
+			await this.instance.requestManager.removeFolder(dir, this.preparePath(path));
 		})
 	}
+
+    private preparePath(path: string) : string {
+		const updatedBasePath = (this.instance.rootDir).replaceAll("/", "\\");
+		const updatedPath = path.replaceAll('/', '\\');
+
+		let newPath = updatedPath.replaceAll(updatedBasePath, "");
+		if (newPath.endsWith('\\')) {
+			newPath = newPath.substr(0, newPath.length - 1).slice(1);
+		} if (newPath.startsWith('\\')) {
+            newPath = newPath.substr(1)
+        } if (newPath.includes('\\\\')) {
+            newPath = newPath.replaceAll('\\\\', '\\')
+        }
+		return newPath
+	}
 }
+

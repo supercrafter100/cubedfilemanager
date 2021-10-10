@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import update_notifier from 'update-notifier';
 import CubedFileManager from './CubedFileManager';
+import { basename, join, resolve } from 'path';
 
 import minimist from 'minimist';
 
@@ -12,8 +13,8 @@ import minimist from 'minimist';
 /**
  * Notify users if a new update is ready
  */
-const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
-update_notifier({ pkg }).notify();
+const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
+update_notifier({ pkg, shouldNotifyInNpmScript: true }).notify();
 
 /**
  * Write a banner saying the package name
@@ -28,24 +29,29 @@ console.log(
  */
 const helpMessage = `
 		Usage
-			$ cfm <path> <args>
+			$ cfm [path] [args]
 	
 		Options
-			--name, -n Say who connected with CFM
-			--folderSupport, -fs Enables folder suppor (creates folders in your file manager depending on your folders in here)
-			--logerrors, -logerr Shows all data returned by the console when reloading a file.
+			--init Create a CubedCraft.json files with settings you can edit for your workspace
+			--logerrors --logerr Log errors associated with your script to the console. (Doesn't work 100% of the time)
 			--upload Upload all your files in your directory to scripts directory of the server.
 			--delete Delete all the files from the scripts directory of the server
 			--sync Synchronise all files from the file manager to your machine (will work with folders if there are any in the file manager)
-			--init Create a cubedfilemanager.json file to keep track of settings.
-			--dir The base directory to work from in your file manager. Defaults to "plugins/Skript/scripts"
+			--help -help Show this help menu
 `
+let argv;
+let path;
 
-if (!process.argv[2]) {
+if (!(process.argv[2] == basename(process.argv[0])) && !process.argv.includes('-help') && !process.argv.includes('--help')) {
+	argv = minimist(process.argv.slice(2));
+	path = process.cwd();
+} else if (process.argv.includes('-help') || process.argv.includes('--help')) {
 	console.log(helpMessage);
 	process.exit(0);
+} else {
+	argv = minimist(process.argv.slice(3));
+	path = resolve(process.cwd(), process.argv[2])
 }
-const argv = minimist(process.argv.slice(3));
 
-new CubedFileManager(process.argv[2], argv);
+new CubedFileManager(path, argv);
 

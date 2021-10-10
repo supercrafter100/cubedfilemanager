@@ -3,7 +3,6 @@ import cheerio from "cheerio";
 import CubedFileManager from "../CubedFileManager";
 import fetch from 'node-fetch';
 import getSkriptErrors from '../util/getSkriptErrors';
-
 export default class RequestManager {
 	
 	private instance: CubedFileManager;
@@ -34,10 +33,10 @@ export default class RequestManager {
 				let normalpath = rawPath.split('\\')
 				path = normalpath.slice(0, normalpath.length - 1).join('/');
 			} else {
-				path = rawPath;
+				path = "";
 			}
 
-			const url = `https://playerservers.com/dashboard/filemanager/?action=new&dir=/${this.instance.baseDir}/${path}/`;
+			const url = `https://playerservers.com/dashboard/filemanager/?action=new&dir=/${this.instance.baseDir}/${path}`;
 			spin.start();
 			await fetch(url, { headers: headers as any })
 			.then((res) => res.text())
@@ -59,8 +58,6 @@ export default class RequestManager {
 				params.append("edit-file-content", content);
 				params.append("edit-file-sub", "Save");
 				params.append("ext", fileExtension);
-
-				console.log(editToken);
 		
 				/**
 				 * Fetching a second time to actually make the file
@@ -131,7 +128,7 @@ export default class RequestManager {
 	}
 
 	/**
-	 * 
+	 * Edit a file on the dashboard
 	 * @param name The name of the file
 	 * @param content The content of the file
 	 * @param rawPath The path to the file in the file manager
@@ -147,7 +144,7 @@ export default class RequestManager {
 				let normalpath = rawPath.split('\\')
 				path = normalpath.slice(0, normalpath.length - 1).join('/');
 			} else {
-				path = rawPath;
+				path = "";
 			}
 
 			const url = `https://playerservers.com/dashboard/filemanager/&action=edit&medit=/${this.instance.baseDir}/${path}/${name}&dir=/${this.instance.baseDir}/${path}`;
@@ -189,17 +186,129 @@ export default class RequestManager {
 					if (!this.instance.settingsManager.settings?.logErrors) return resolve();
 
 					const console_content = await this.getConsoleContent();
-					console.log(console_content);
 					const skript_errors = getSkriptErrors(console_content, name);
 
 					if (skript_errors) {		
 						this.instance.message_error('Encountered an error when reloading ' + name);
-						this.instance.message_error(skript_errors['data'].replace('\n', ""));
+						for (const line of skript_errors.data.split("\n")) {
+							this.instance.message_error(line)
+						}
 						this.instance.message_error(`Script reloaded with ${skript_errors.errors} errors`);
 					}
 
 					resolve();
 				})
+			})
+		})
+	}
+
+	/**
+	 * Delete a file on the dashboard
+	 * @param name The name of the file
+	 * @param rawPath The path of the file in the file manager
+	 */
+	public removeFile(name: string, rawPath: string) : Promise<void> {
+		return new Promise(async (resolve) => {
+			const headers = this.instance.headers;
+
+			let path: string;
+			const spin = new Spinner(`Deleting file ${name}...`);
+
+			if (this.instance.folderSupport && rawPath.length > 0) {
+				let normalpath = rawPath.split('\\')
+				path = normalpath.slice(0, normalpath.length - 1).join('/');
+			} else {
+				path = "";
+			}
+
+			spin.start();
+
+			// Disabling the script so it gets unloaded from the server
+			await this.sendCommand(`sk disable ${this.instance.folderSupport ? `${path}/${name}` : name}`);
+
+			// Initial fetch to get the delete token
+			const url = `https://playerservers.com/dashboard/filemanager/&dir=${this.instance.baseDir}/${path}`;
+			const html = await fetch(url, { headers: headers as any }).then((res) => res.text());
+
+			const editToken = getDeleteToken(html);
+			if (editToken == null) {
+				return this.instance.message_error("The delete token could not be retrieved. The HTML of the website likely changed. Please report this to Supercrafter100#6600 on discord.");
+			}
+
+			const deleteURL = "https://playerservers.com/dashboard/filemanager/&action=delete";
+			const params = new URLSearchParams();
+			params.append("targetFile", `/${this.instance.baseDir}/${path}/-${name}`);
+			params.append("target", `/${this.instance.baseDir}/${path}/-${name}`);
+			params.append("action", "delete");
+			params.append("token", editToken);
+
+			await fetch(deleteURL, {
+				headers: headers as any,
+				method: "POST",
+				body: params as any
+			})
+			.then(async () => {
+				spin.stop();
+
+				this.instance.message_log(`Deleted file ${name}`);
+				await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fDeleted file &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
+				
+				resolve();
+			})
+		})
+	}
+
+	/**
+	 * Delete a folder on the dashboard
+	 * @param name The name of the folder
+	 * @param rawPath The path of the folder in the file manager
+	 */
+	 public removeFolder(name: string, rawPath: string) : Promise<void> {
+		return new Promise(async (resolve) => {
+			const headers = this.instance.headers;
+
+			let path: string;
+			const spin = new Spinner(`Deleting file ${name}...`);
+
+			if (this.instance.folderSupport && rawPath.length > 0) {
+				let normalpath = rawPath.split('\\')
+				path = normalpath.slice(0, normalpath.length - 1).join('/');
+			} else {
+				path = "";
+			}
+
+			spin.start();
+
+			// Initial fetch to get the delete token
+			const url = `https://playerservers.com/dashboard/filemanager/&dir=${this.instance.baseDir}/${path}`;
+			const html = await fetch(url, { headers: headers as any }).then((res) => res.text());
+
+			const editToken = getDeleteToken(html);
+			if (editToken == null) {
+				return this.instance.message_error("The delete token could not be retrieved. The HTML of the website likely changed. Please report this to Supercrafter100#6600 on discord.");
+			}
+
+			const deleteURL = "https://playerservers.com/dashboard/filemanager/&action=delete";
+			const params = new URLSearchParams();
+			params.append("targetFile", `/${this.instance.baseDir}/${path}/${name}`);
+			params.append("target", `/${this.instance.baseDir}/${path}/${name}`);
+			params.append("action", "delete");
+			params.append("token", editToken);
+
+			// console.log(params.toString())
+
+			await fetch(deleteURL, {
+				headers: headers as any,
+				method: "POST",
+				body: params as any
+			})
+			.then(async () => {
+				spin.stop();
+
+				this.instance.message_log(`Deleted folder ${name}`);
+				await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fDeleted folder &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
+				
+				resolve();
 			})
 		})
 	}
@@ -212,12 +321,12 @@ export default class RequestManager {
 	public folderExists(dir: string) : Promise<boolean> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers
-			
-			const url = `https://playerservers.com/dashboard/filemanager/&dir=/${this.instance.baseDir}${dir}`;
+			// https://playerservers.com/queries/list_files/?dir=/plugins/Skript/scripts/a
+			const url = `https://playerservers.com/queries/list_files/&dir=/${this.instance.baseDir}${dir}`;
 			await fetch(url, { headers: headers as any })
-			.then((res) => res.text())
-			.then(async (html) => {
-				if (html.includes(`window.location.replace("/dashboard/filemanager")`)) {
+			.then((res) => res.json())
+			.then(async (json) => {
+				if (json.error == true) {
 					resolve(false);
 				}
 				resolve(true);
@@ -235,6 +344,24 @@ export default class RequestManager {
 			}).then((res) => res.text());
 
 			resolve(data);
+		})
+	}
+
+	/**
+	 * Get the content of a file on the dashboard
+	 * @param path The path to the file
+	 * @param file The name of the file
+	 * @returns {Promise<string>} The contents of the file
+	 */
+	public getFileContent(path: string, file: string) : Promise<string> {
+		return new Promise(async (resolve) => {
+			const headers = this.instance.headers;
+			const url = `https://playerservers.com/dashboard/filemanager/&action=edit&medit=/plugins/Skript/scripts/${path}${file}&dir=/plugins/Skript/scripts${path}`;
+			const html = await fetch(url, { headers: headers as any, }).then((res) => res.text());
+
+			const $ = cheerio.load(html);
+			const contents = $('#code').text();
+			resolve(contents);
 		})
 	}
 
@@ -386,7 +513,7 @@ export default class RequestManager {
 
 	/**
 	 * Check if a session needs to be updated or not
-	 * @returns A promise that resolves once the session has been checked and renewed if neccesary
+	 * @returns {Promise<void>} A promise that resolves once the session has been checked and renewed if neccesary
 	 */
 	public checkAndUpdateSession() : Promise<void> {
 		return new Promise(async (resolve) => {
@@ -410,3 +537,13 @@ export default class RequestManager {
 function getFileExtension(fname: string) {
 	return fname.slice((Math.max(0, fname.lastIndexOf(".")) || Infinity) + 1);
 }
+
+function getDeleteToken(html: string) {
+	const $ = cheerio.load(html);
+	const webJavaScript = $($("script").get()[8]).html();
+	if (webJavaScript == null) return null;
+
+    // Getting the token (this is really hardcoded but I don't know a more efficient way to extract this)
+    const token = webJavaScript.split('\n')[2].split("token: \"")[1].split("\" });")[0];
+    return token;
+} 
