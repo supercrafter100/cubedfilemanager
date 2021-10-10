@@ -1,0 +1,17 @@
+# Made for cubedfilemanager (npm package)
+# Idc what you do with it but its needed for the system to work propperly
+# Originally created by DebitCardz.
+
+command /sendmsgtoops [<string>]:
+    trigger:
+        if executor has permission "core.admin":
+            if arg-1 is set:
+                loop all players:
+                    if loop-player has permission "core.staff":
+                        send "" to loop-player
+                        send "&7[&dSystem&7]: &f%colored arg-1%&7. &7&o(%now%)" to loop-player
+                        send "" to loop-player                                                
+            else:
+                send "&cUsage: /sendmsgtoops <msg>."                        
+        else:
+            send "&cYou are lacking the requiried permissions to execute this command."

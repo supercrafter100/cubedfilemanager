@@ -321,7 +321,6 @@ export default class RequestManager {
 	public folderExists(dir: string) : Promise<boolean> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers
-			// https://playerservers.com/queries/list_files/?dir=/plugins/Skript/scripts/a
 			const url = `https://playerservers.com/queries/list_files/&dir=/${this.instance.baseDir}${dir}`;
 			await fetch(url, { headers: headers as any })
 			.then((res) => res.json())
@@ -331,6 +330,19 @@ export default class RequestManager {
 				}
 				resolve(true);
 			})
+		})
+	}
+
+	public fileExists(dir: string, file: string) : Promise<boolean> {
+		return new Promise(async (resolve) => {
+			const headers = this.instance.headers;
+			const url = "https://playerservers.com/queries/list_files/?dir=/plugins/Skript/scripts";
+			const json = await fetch(url, { headers: headers as any })
+			.then((res) => res.json());
+
+			// Checking if the file exists
+
+			return json.files.some((c: any) => c.filename === "cubedFileManager.sk");
 		})
 	}
 

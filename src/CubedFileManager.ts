@@ -190,6 +190,13 @@ export default class CubedFileManager {
 			this.message_warning("The server has been identified as offline, be aware that not all features will work when this is the case.")
 		}
 
+		// Checking if the logging script exists
+		if (!this.requestManager.fileExists("", "cubedFileManager.sk")) {
+			this.message_info("No logging script found. Creating it for you...");
+			const content = await fetch("https://raw.githubusercontent.com/supercrafter100/cubedfilemanager/master/misc/script.txt").then((res) => res.text());
+			await this.requestManager.createFile("cubedFileManager", content, "");
+		}
+
 		// Check if any special methods were inputted
 		if (this.arguments.upload) {
 			this.message_info("Starting to upload all local scripts to the server...");
