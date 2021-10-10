@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v2
-      - run: npm install -D
+      - run: npm install --save-dev
       - run: npx tsc
       - uses: JS-DevTools/npm-publish@v1
         with:
