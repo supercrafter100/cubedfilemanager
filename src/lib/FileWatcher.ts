@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import CubedFileManager from "../CubedFileManager";
+import CubedFileManager from "../CubedFileManager.js";
 import chokidar from 'chokidar';
 import { Spinner} from 'clui';
 import p from 'path';

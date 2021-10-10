@@ -1,6 +1,6 @@
 import { lstatSync, readdirSync, readFileSync } from "fs";
 import path from "path";
-import CubedFileManager from "../CubedFileManager";
+import CubedFileManager from "../CubedFileManager.js";
 
 export default class FileUploader {
 

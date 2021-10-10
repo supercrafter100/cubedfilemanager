@@ -1,17 +1,17 @@
 import { ParsedArgs } from "minimist";
-import RequestManager from "./lib/RequestsManager";
-import SettingsManager from "./lib/SettingsManager";
-import FileWatcher from './lib/FileWatcher';
+import RequestManager from "./lib/RequestsManager.js";
+import SettingsManager from "./lib/SettingsManager.js";
+import FileWatcher from './lib/FileWatcher.js';
 import chalk from "chalk";
 import inquirer from 'inquirer';
-import CryptoHandler from "./lib/CryptoHandler";
-import { LoginMethods } from "./types/LoginTypes";
-import normalQuestion from "./questions/normalQuestion";
-import hiddenQuestion from "./questions/hiddenQuestion";
-import Utility from "./lib/Utility";
-import FileUploader from "./util/uploadScriptToDashboard";
-import FileDownloader from "./util/syncScriptsToLocal";
-import deleteScriptsFolder from "./util/deleteScriptsFolder";
+import CryptoHandler from "./lib/CryptoHandler.js";
+import { LoginMethods } from "./types/LoginTypes.js";
+import normalQuestion from "./questions/normalQuestion.js";
+import hiddenQuestion from "./questions/hiddenQuestion.js";
+import Utility from "./lib/Utility.js";
+import FileUploader from "./util/uploadScriptToDashboard.js";
+import FileDownloader from "./util/syncScriptsToLocal.js";
+import deleteScriptsFolder from "./util/deleteScriptsFolder.js";
 
 export default class CubedFileManager {
 

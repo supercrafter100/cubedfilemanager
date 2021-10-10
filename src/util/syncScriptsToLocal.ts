@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import CubedFileManager from "../CubedFileManager";
+import CubedFileManager from "../CubedFileManager.js";
 import fetch from 'node-fetch';
 
 export default class FileDownloader {
@@ -15,7 +15,7 @@ export default class FileDownloader {
     public async downloadFiles(dir: string) {
         // Get all files in the file manager
         const url = `https://playerservers.com/queries/list_files/?dir=/plugins/Skript/scripts${dir}`;
-        const json = await fetch(url, { headers: this.manager.headers as any }).then((res) => res.json());
+        const json: any = await fetch(url, { headers: this.manager.headers as any }).then((res) => res.json());
 
         // Looping through all files
         for (const file of json.files) {

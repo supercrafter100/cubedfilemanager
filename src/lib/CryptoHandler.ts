@@ -1,7 +1,7 @@
 import cryptoJS from 'crypto-js';
 import fs from 'fs';
 import path from 'path';
-import CubedFileManager from '../CubedFileManager';
+import CubedFileManager from '../CubedFileManager.js';
 
 export default class CryptoHandler {
 

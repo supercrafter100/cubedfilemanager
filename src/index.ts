@@ -4,7 +4,7 @@ import figlet from 'figlet';
 import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import update_notifier from 'update-notifier';
-import CubedFileManager from './CubedFileManager';
+import CubedFileManager from './CubedFileManager.js';
 import { basename, join, resolve } from 'path';
 
 import minimist from 'minimist';

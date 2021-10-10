@@ -1,8 +1,8 @@
 import { Spinner } from 'clui';
 import cheerio from "cheerio";
-import CubedFileManager from "../CubedFileManager";
+import CubedFileManager from "../CubedFileManager.js";
 import fetch from 'node-fetch';
-import getSkriptErrors from '../util/getSkriptErrors';
+import getSkriptErrors from '../util/getSkriptErrors.js';
 export default class RequestManager {
 	
 	private instance: CubedFileManager;
@@ -325,7 +325,7 @@ export default class RequestManager {
 			const url = `https://playerservers.com/queries/list_files/&dir=/${this.instance.baseDir}${dir}`;
 			await fetch(url, { headers: headers as any })
 			.then((res) => res.json())
-			.then(async (json) => {
+			.then(async (json: any) => {
 				if (json.error == true) {
 					resolve(false);
 				}

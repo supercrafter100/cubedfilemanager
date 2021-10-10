@@ -1,4 +1,4 @@
-import CubedFileManager from "../CubedFileManager";
+import CubedFileManager from "../CubedFileManager.js";
 
 export default async (instance: CubedFileManager) => {
     
