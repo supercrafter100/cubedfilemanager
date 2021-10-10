@@ -14,7 +14,7 @@ import minimist from 'minimist';
  * Notify users if a new update is ready
  */
 const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
-update_notifier({ pkg, shouldNotifyInNpmScript: true }).notify();
+update_notifier({ pkg, updateCheckInterval: 0 }).notify();
 
 /**
  * Write a banner saying the package name
