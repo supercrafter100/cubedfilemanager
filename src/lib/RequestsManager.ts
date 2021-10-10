@@ -333,16 +333,22 @@ export default class RequestManager {
 		})
 	}
 
+	/**
+	 * Check if a file exists on the file manager
+	 * @param dir The directory to check instance
+	 * @param file The name of the file to check (including the extension)
+	 * @returns Promise that resolves with a boolean that is true if the file exists and false if it doesn't
+	 */
 	public fileExists(dir: string, file: string) : Promise<boolean> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers;
-			const url = "https://playerservers.com/queries/list_files/?dir=/plugins/Skript/scripts";
+			const url = `https://playerservers.com/queries/list_files/?dir=/${this.instance.baseDir}${dir}`;
 			const json = await fetch(url, { headers: headers as any })
 			.then((res) => res.json());
 
 			// Checking if the file exists
-
-			return json.files.some((c: any) => c.filename === "cubedFileManager.sk");
+			const exists = json.files.some((c: any) => c.filename === file);
+			resolve(exists);
 		})
 	}
 

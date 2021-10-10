@@ -12,6 +12,7 @@ import Utility from "./lib/Utility.js";
 import FileUploader from "./util/uploadScriptToDashboard.js";
 import FileDownloader from "./util/syncScriptsToLocal.js";
 import deleteScriptsFolder from "./util/deleteScriptsFolder.js";
+import fetch from 'node-fetch';
 
 export default class CubedFileManager {
 
@@ -191,10 +192,10 @@ export default class CubedFileManager {
 		}
 
 		// Checking if the logging script exists
-		if (!this.requestManager.fileExists("", "cubedFileManager.sk")) {
+		if (!(await this.requestManager.fileExists("", "cubedFileManager.sk"))) {
 			this.message_info("No logging script found. Creating it for you...");
-			const content = await fetch("https://raw.githubusercontent.com/supercrafter100/cubedfilemanager/master/misc/script.txt").then((res) => res.text());
-			await this.requestManager.createFile("cubedFileManager", content, "");
+			const content = await fetch("https://raw.githubusercontent.com/supercrafter100/cubedfilemanager/master/src/misc/script.txt").then((res) => res.text());
+			await this.requestManager.createFile("cubedFileManager.sk", content, "");
 		}
 
 		// Check if any special methods were inputted
