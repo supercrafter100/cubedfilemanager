@@ -93,7 +93,10 @@ export default class CubedFileManager {
 		/**
 		 * Logging into their account & getting a session ID
 		 */
-		const loginMethod = await this.askLoginMethod();
+		let loginMethod: LoginMethods;
+		if (!this.settingsManager.exists || this.cryptoManager.username.length < 1 || this.cryptoManager.password.length < 1) 
+			loginMethod = await this.askLoginMethod();
+		else loginMethod = LoginMethods.AUTOMATIC;
 
 		let username;
 		let password;

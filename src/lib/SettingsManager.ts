@@ -7,6 +7,7 @@ export default class SettingsManager {
 	
 	public settings: Settings | null;
 	private instance: CubedFileManager;
+	public exists: boolean = false;
 
 	private defaultSettings: Settings = {
 		username: '',
@@ -27,6 +28,7 @@ export default class SettingsManager {
 			if (exists) {
 				this.instance.message_success("Found CubedCraft.json file");
 				this.settings = JSON.parse(fs.readFileSync(path.join(this.instance.rootDir, 'CubedCraft.json'), 'utf-8'));
+				this.exists = true;
 			} else {
 				this.settings = this.defaultSettings;
 			}
