@@ -16,7 +16,8 @@ export default class BackupLoader {
         if (!(await this.manager.requestManager.folderExists("/file-backups"))) {
             await this.manager.requestManager.createFolder("", "file-backups");
         }
-        const folderName = `backup-${new Date().toLocaleString().replace(/\//g, "-").replace(/\-/g, "-").replace(/\:/g, "-").replace(/ +/g, "-")}`;
+        const d = new Date();
+        const folderName = `backup-${d.getDay()}-${d.getMonth()}-${d.getFullYear()}-${d.getHours()}.${d.getMinutes()}.${d.getSeconds()}`;
         await this.manager.requestManager.createFolder("/file-backups", folderName);
         this.manager.baseDir = `plugins/Skript/file-backups/${folderName}`;
 
