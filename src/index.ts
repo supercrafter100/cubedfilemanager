@@ -37,6 +37,8 @@ const helpMessage = `
 			--upload Upload all your files in your directory to scripts directory of the server.
 			--delete Delete all the files from the scripts directory of the server
 			--sync Synchronise all files from the file manager to your machine (will work with folders if there are any in the file manager)
+			--livesync Create a websocket connection with the CubedFileManager server. If anyone working on the same server edits a file and is using cubedfilemanager, it will get updated immediatly on your local filesystem as well.
+			--backup Back all local files to plugins/Skript/backups/backup-<time>/
 			--help -help Show this help menu
 `
 let argv;

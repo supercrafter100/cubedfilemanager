@@ -13,6 +13,10 @@ import FileUploader from "./util/uploadScriptToDashboard.js";
 import FileDownloader from "./util/syncScriptsToLocal.js";
 import deleteScriptsFolder from "./util/deleteScriptsFolder.js";
 import fetch from 'node-fetch';
+import SocketManager from "./util/SocketManager.js";
+import { existsSync, writeFileSync } from "fs";
+import { join } from "path";
+import BackupLoader from "./util/backupScriptsToServer.js";
 
 export default class CubedFileManager {
 
@@ -21,6 +25,7 @@ export default class CubedFileManager {
 	public fileWatcher: FileWatcher;
 	public cryptoManager: CryptoHandler;
 	public utilities: Utility
+	public socketManager: SocketManager | undefined;
 
 	public rootDir: string
 	public arguments: ParsedArgs;
@@ -217,6 +222,21 @@ export default class CubedFileManager {
 			this.message_info("Deleting all scripts in the scripts folder...");
 			await deleteScriptsFolder(this);
 			process.exit(0);
+		} else if (this.arguments.backup) {
+			this.message_info("Starting to backup all local scripts to the server...");
+			const uploader = new BackupLoader(this);
+			await uploader.start();
+			process.exit(0);
+		}
+
+		if (this.arguments.livesync || this.settingsManager.settings?.livesync) {
+			if (await this.askLiveSyncPermission() == false) {
+				this.message_error("User did not agree, not starting socket system...");
+			} else {
+				this.message_info('Live sync is enabled, starting socket...')
+				this.socketManager = new SocketManager(this);
+				this.socketManager.connect('https://cfm.supercrafter100.com/')
+			};
 		}
 
 		// Starting file watcher
@@ -268,6 +288,24 @@ export default class CubedFileManager {
 		})
 	}
 
+	private askLiveSyncPermission() : Promise<boolean> {
+		return new Promise(async (resolve) => {
+			const path = join(__dirname, './sync_permission')
+			if (existsSync(path)) return resolve(true);
+
+			const response = await normalQuestion("By using live sync, temporary access to your account must be granted to the server, do you agree to this? (y/n) ").then((response) => response.toLowerCase());
+			if (["y", "n"].includes(response)) {
+				if (response == "n") return resolve(false);
+
+				writeFileSync(path, 'User has agreed to allow access to the server...');
+				return resolve(true);
+			}
+
+			this.message_error("Invalid response, must be \"y\" or \"n\"")
+			resolve(await this.askLiveSyncPermission());
+		})
+	}
+
 
 	/**
 	 * Session verification
@@ -278,7 +316,7 @@ export default class CubedFileManager {
 		if (expired) {
 			this.message_info('Current session expired. Refreshing it!');
 			if (!this.temp_server || !this.temp_password || !this.temp_username) {
-				this.message_error('Failed to log back in. Exitting system.');
+				this.message_error('Failed to log back in. Closing system.');
 				process.exit(0);
 			}
 			const response = await this.requestManager.login(this.temp_username, this.temp_password);

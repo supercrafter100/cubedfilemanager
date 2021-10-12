@@ -4,4 +4,6 @@ export interface Settings {
 	folderSupport: boolean | undefined,
 	logErrors: boolean | undefined,
 	baseDir: string | undefined;
+	livesync: boolean | undefined;
+	extensions: string[];
 }

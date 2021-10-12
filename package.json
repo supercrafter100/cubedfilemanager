@@ -1,6 +1,6 @@
 {
   "name": "cubedfilemanager",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "A CLI that helps scripters easily work on their playerservers on the CubedCraft network.",
   "exports": "./dist/index.js",
   "engines": {
@@ -24,6 +24,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/cheerio": "^0.22.30",
     "@types/clui": "^0.3.0",
     "@types/crypto-js": "^4.0.1",
     "@types/figlet": "^1.5.1",
@@ -46,6 +47,7 @@
     "minimist": "^1.2.5",
     "node-fetch": "^2.6.5",
     "path": "^0.12.7",
+    "socket.io-client": "^4.2.0",
     "update-notifier": "^5.1.0"
   },
   "bin": {

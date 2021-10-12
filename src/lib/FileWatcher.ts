@@ -42,9 +42,10 @@ export default class FileWatcher {
 
 		watcher.on('add', async (path) => {
 			const file = p.basename(path);
-			const isSkript = file.endsWith('.sk');
-			if (!isSkript) return;
+			if (!this.isAllowedExtension(file)) return;
 			
+			if (this.instance.socketManager?.lastUpdatedFile == file) return;
+
 			// Check session
 			await this.instance.requestManager.checkAndUpdateSession();
 
@@ -58,12 +59,14 @@ export default class FileWatcher {
 
 			// Create the file
 			await this.instance.requestManager.createFile(file, content, this.preparePath(path));
+			this.instance.socketManager?.write("file_create", file, content, this.preparePath(path))
 		});
 
 		watcher.on('change', async (path) => {
 			const file = p.basename(path);
-			const isSkript = file.endsWith('.sk');
-			if (!isSkript) return;
+			if (!this.isAllowedExtension(file)) return;
+
+			if (this.instance.socketManager?.lastUpdatedFile == file) return;
 
 			// Check session
 			await this.instance.requestManager.checkAndUpdateSession();
@@ -78,22 +81,28 @@ export default class FileWatcher {
 
 			// Edit file
 			await this.instance.requestManager.editFile(file, content, this.preparePath(path));
+			this.instance.socketManager?.write("file_edit", file, content, this.preparePath(path))
+
 		});
 
 		watcher.on('unlink', async (path) => {
 			const file = p.basename(path);
-			const isSkript = file.endsWith('.sk');
-			if (!isSkript) return;
+			if (!this.isAllowedExtension(file)) return;
+
+			if (this.instance.socketManager?.lastUpdatedFile == file) return;
 
 			// Check session
 			await this.instance.requestManager.checkAndUpdateSession();
 
 			// Delete file
 			await this.instance.requestManager.removeFile(file, this.preparePath(path));
+			this.instance.socketManager?.write("file_delete", file, this.preparePath(path))
 		});
 
 		watcher.on('unlinkDir', async (path) => {
 			const dir = p.basename(path);
+
+			if (this.instance.socketManager?.lastUpdatedFile == dir) return;
 
 			// Check session
 			await this.instance.requestManager.checkAndUpdateSession();
@@ -116,6 +125,14 @@ export default class FileWatcher {
             newPath = newPath.replaceAll('\\\\', '\\')
         }
 		return newPath
+	}
+
+	private isAllowedExtension(name: string) : boolean {
+		let isAllowed = false;
+		for (const extension of this.instance.settingsManager.settings!.extensions) {
+			if (name.endsWith(extension)) isAllowed = true;
+		}
+		return isAllowed;
 	}
 }
 

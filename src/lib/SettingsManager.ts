@@ -14,7 +14,9 @@ export default class SettingsManager {
 		server: '',
 		folderSupport: false,
 		logErrors: false,
-		baseDir: "plugins/Skript/scripts"
+		baseDir: "plugins/Skript/scripts",
+		livesync: false,
+		extensions: [".sk"]
 	}
 
 	constructor(instance: CubedFileManager) {
