@@ -41,7 +41,7 @@ export default class SocketManager {
         this.lastUpdatedFile = name;
 
         const writePath = this.instance.folderSupport ? join(this.instance.rootDir, path) : join(this.instance.rootDir, name);
-        if (this.instance.folderSupport) await fs.promises.mkdir(path, { recursive: true });
+        if (this.instance.folderSupport) await fs.promises.mkdir(join(this.instance.rootDir, path.replace(name, "")), { recursive: true });
 
         writeFileSync(writePath, content);
     }
@@ -51,7 +51,7 @@ export default class SocketManager {
         this.lastUpdatedFile = name;
 
         const writePath = this.instance.folderSupport ? join(this.instance.rootDir, path) : join(this.instance.rootDir, name);
-        if (this.instance.folderSupport) await fs.promises.mkdir(path, { recursive: true });
+        if (this.instance.folderSupport) await fs.promises.mkdir(join(this.instance.rootDir, path.replace(name, "")), { recursive: true });
         writeFileSync(writePath, content);
     }
 
