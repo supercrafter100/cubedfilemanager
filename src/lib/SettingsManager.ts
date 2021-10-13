@@ -30,6 +30,13 @@ export default class SettingsManager {
 			if (exists) {
 				this.instance.message_success("Found CubedCraft.json file");
 				this.settings = JSON.parse(fs.readFileSync(path.join(this.instance.rootDir, 'CubedCraft.json'), 'utf-8'));
+
+				// Check all keys to see if they exist
+				for (const key of Object.keys(this.defaultSettings)) {
+					if (!Object.keys(this.settings!).includes(key)) {
+						(this.settings as any)[key] = (this.defaultSettings as any)[key];
+					}
+				}
 				this.exists = true;
 			} else {
 				this.settings = this.defaultSettings;
