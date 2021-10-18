@@ -85,6 +85,7 @@ export default class RequestManager {
 	 * Create a folder on the dashboard
 	 * @param dir The directory the folder has to be made in
 	 * @param dirName The name of the folder
+	 * @param baseDir The base directory to create the folder in (defaults to the base directory of the instance)
 	 * @returns Promise that resolves when the folder is made
 	 */
 	public createFolder(dir: string, dirName: string, baseDir: string = this.instance.baseDir) : Promise<void> {
