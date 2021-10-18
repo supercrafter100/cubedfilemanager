@@ -4,5 +4,13 @@ export default async (instance: CubedFileManager) => {
     
     // Delete folder
     await instance.requestManager.removeFolder("", "");
-    await instance.requestManager.createFolder("", "scripts");
+
+    // Get name of current folder and path to the directory that contains that folder
+    const pathParts = instance.baseDir.split(`/`)
+    const directoryName = pathParts.pop()?.toString() ?? ''
+    const pathToInnerDirectory = pathParts.join(`/`)
+
+    // Create folder again
+    await instance.requestManager.createFolder("", directoryName, pathToInnerDirectory);
+    
 }
