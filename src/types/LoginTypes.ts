@@ -3,3 +3,9 @@ export enum LoginMethods {
 	RECONFIGURE,
 	AUTOMATIC
 }
+
+export enum ResponseTypes {
+	SUCCESS,
+	TFA,
+	FAILURE
+}

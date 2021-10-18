@@ -3,6 +3,8 @@ import cheerio from "cheerio";
 import CubedFileManager from "../CubedFileManager.js";
 import fetch from 'node-fetch';
 import getSkriptErrors from '../util/getSkriptErrors.js';
+import { ResponseTypes } from '../types/LoginTypes.js';
+
 export default class RequestManager {
 	
 	private instance: CubedFileManager;
@@ -394,7 +396,7 @@ export default class RequestManager {
 	 * @param password The password to login with
 	 * @returns Promise that resolves with the phpsessid token
 	 */
-	public login(username: string, password: string) : Promise<string|null> {
+	public login(username: string, password: string) : Promise<null|string> {
 		return new Promise(async(resolve) => {
 			const url = 'https://playerservers.com/login';
 			await fetch(url)
@@ -414,7 +416,7 @@ export default class RequestManager {
 				params.append('password', password);
 				params.append('token', requestToken as string);
 
-				const success = await fetch(url, {
+				const response = await fetch(url, {
 					method: 'POST',
 					body: params as any,
 					headers: {
@@ -422,18 +424,50 @@ export default class RequestManager {
 					}
 				})
 				.then((res) => res.text())
-				.then((html) => html.includes(`replace("/dashboard/")`))
+				.then((html) => {
+					if (html.includes(`replace("/dashboard/")`)) return ResponseTypes.SUCCESS;
+					if (html.includes(`Two Factor Authentication`)) return ResponseTypes.TFA;
+					else return ResponseTypes.FAILURE;
+				})
 				.catch(e => console.log(e));
 
-				if (success) {
+				if (response == ResponseTypes.SUCCESS) {
 					this.instance.message_success(`Logged in as ${username}`)
 					resolve(cookie);
-				} else {
-					this.instance.message_error(`Failed to log in as ${username}`)
+				} else if (response == ResponseTypes.FAILURE) {
 					resolve(null);
+				} else if (response == ResponseTypes.TFA) {
+					await this.instance.ask2FACode(html, cookie);
+					resolve(cookie);
 				}
 			})
 		});
+	}
+
+	public submit2FACode(code: string, html: string, cookie: string) : Promise<boolean> {
+		return new Promise(async (resolve) => {
+			const url = 'https://playerservers.com/login';
+			const $ = cheerio.load(html);
+
+			// Get the edit token				
+			const token = $("input[name=token]").val();
+
+			const params = new URLSearchParams();
+			params.append('tfa_code', code);
+			params.append('tfa', "true");
+			params.append('token', token);
+
+			// Fetch 2nd time to actually login
+			const success = await fetch(url, {
+				method: 'POST',
+				headers: {
+					cookie: `PHPSESSID=${cookie};`
+				}, 
+				body: params as any 
+			}).then((res) => res.text()).then((res) => res.includes('Invalid code, please try again.'));
+			
+			resolve(success);
+		})
 	}
 
 	/**

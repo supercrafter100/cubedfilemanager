@@ -306,6 +306,22 @@ export default class CubedFileManager {
 		})
 	}
 
+	public ask2FACode(html: string, cookie: string) : Promise<void> {
+		return new Promise(async (resolve) => {
+			
+			// ask code
+			const response = await normalQuestion("Enter 2FA code from your authenticator app: ");
+
+			// Attempt to run it through the 2FA stuff
+			const success = this.requestManager.submit2FACode(response, html, cookie);
+			if (!success) {
+				this.message_error("Invalid 2FA code. Please try again...");
+				return resolve(await this.ask2FACode(html, cookie));
+			}
+			resolve();
+		})
+	}
+
 
 	/**
 	 * Session verification
