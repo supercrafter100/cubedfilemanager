@@ -306,6 +306,24 @@ export default class CubedFileManager {
 		})
 	}
 
+	/**
+	 * Gets a 2fa code from the user and attempts to use it to login
+	 * @param html The HTML of the 2 factor authentication page returned upon login attempt
+	 * @param session The session of the user
+	 * @returns 
+	 */
+	public twoFactorAuthenticationRequired(html: string, session: string) : Promise<boolean> {
+		return new Promise(async (resolve) => {
+			this.message_info('Account has two factor authentication enabled')
+			
+			const code = await normalQuestion(`Please enter your 2FA code. `)
+			const response = await this.requestManager.twoFactorAuthentication(html, code, session)
+
+			if (!response) this.message_error('Invalid 2FA code entered')
+
+			resolve(response)
+		})
+	}
 
 	/**
 	 * Session verification

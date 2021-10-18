@@ -422,18 +422,55 @@ export default class RequestManager {
 					}
 				})
 				.then((res) => res.text())
-				.then((html) => html.includes(`replace("/dashboard/")`))
+				.then(async (html) => {
+					if (html.includes(`replace("/dashboard/")`)) {
+						return true
+					} else if (html.includes(`Two Factor Authentication`)) {
+						return (await this.instance.twoFactorAuthenticationRequired(html, cookie))
+					} else {
+						return false
+					}
+				})
 				.catch(e => console.log(e));
 
 				if (success) {
 					this.instance.message_success(`Logged in as ${username}`)
 					resolve(cookie);
-				} else {
+				}  else {
 					this.instance.message_error(`Failed to log in as ${username}`)
 					resolve(null);
 				}
 			})
 		});
+	}
+
+	/**
+	 * Enters 2FA details
+	 * @param html The HTML of the page returned after login
+	 * @param code The 2fa code
+	 * @param session The PHPSESSID of the current session
+	 * @returns 
+	 */
+	public twoFactorAuthentication(html: string, code: string, session: string) : Promise<boolean> {
+		return new Promise(async (resolve) => {
+			const $ = cheerio.load(html);
+			const requestToken = $('input[name=token]').val();
+
+			const params = new URLSearchParams();
+			params.append('token', requestToken);
+			params.append('tfa', 'true')
+			params.append('tfa_code', code)
+
+			const url = "https://playerservers.com/login/"
+			resolve (await fetch(url, {
+				method: 'POST',
+				body: params as any,
+				headers: {
+					cookie: `PHPSESSID=${session};`
+				}
+			}).then(res => res.text())
+			.then(body => body.includes(`replace("/dashboard/")`)))
+		})
 	}
 
 	/**
