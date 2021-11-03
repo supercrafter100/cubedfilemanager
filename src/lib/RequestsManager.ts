@@ -435,6 +435,7 @@ export default class RequestManager {
 					this.instance.message_success(`Logged in as ${username}`)
 					resolve(cookie);
 				} else if (response == ResponseTypes.FAILURE) {
+					this.instance.message_error(`Failed to log in as ${username}`)
 					resolve(null);
 				} else if (response == ResponseTypes.TFA) {
 					await this.instance.ask2FACode(html, cookie);

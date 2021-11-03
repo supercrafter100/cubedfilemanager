@@ -124,7 +124,6 @@ export default class CubedFileManager {
 		
 		const response = await this.requestManager.login(username, password);
 		if (response == null) {
-			this.message_error(`Failed to log in as ${username}`)
 			return this.init();
 		}
 
@@ -345,6 +344,12 @@ export default class CubedFileManager {
 				process.exit(0);
 			}
 			const response = await this.requestManager.login(this.temp_username, this.temp_password);
+
+			if (response == null) {
+				this.message_error('Failed to log back in. Closing system.');
+				process.exit(0);
+			}
+
 			await this.requestManager.selectServer(this.temp_server);
 
 			this.sessionToken = response!;
