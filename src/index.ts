@@ -11,6 +11,17 @@ import minimist from 'minimist';
 
 
 /**
+ * Make sure user is on a compatible NodeJS version
+ */
+
+if (typeof process !== 'undefined' && parseInt(process.versions.node.split('.')[0]) < 16) {
+	console.error(chalk.red('CubedFileManager is unable to start due to an issue that must be resolved.'))
+	console.error(chalk.grey('[') + chalk.redBright("x") + chalk.grey("]") + " " + 'Your Node.js version is currently', process.versions.node)
+	console.error(chalk.grey('[') + chalk.redBright("x") + chalk.grey("]") + " " + 'Please update it to version 16 or higher from https://nodejs.org/ to be able to use CubedFileManager!')
+	process.exit(1)
+}
+
+/**
  * Notify users if a new update is ready
  */
 const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
