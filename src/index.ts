@@ -25,7 +25,7 @@ if (typeof process !== 'undefined' && parseInt(process.versions.node.split('.')[
  * Notify users if a new update is ready
  */
 const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
-update_notifier({ pkg, updateCheckInterval: 0 }).notify();
+update_notifier({ pkg, updateCheckInterval: 0 }).notify({ isGlobal: true });
 
 /**
  * Write a banner saying the package name
