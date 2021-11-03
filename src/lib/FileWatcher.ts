@@ -44,13 +44,13 @@ export default class FileWatcher {
 			const file = p.basename(path);
 			if (!this.isAllowedExtension(file)) return;
 			
-			if (this.instance.socketManager?.lastUpdatedFile == file) return;
+			// Read file
+			const content = readFileSync(path, 'utf8');
+
+			if (this.instance.socketManager?.lastUpdatedFile == file && this.instance.socketManager?.lastUpdatedContent == content) return;
 
 			// Check session
 			await this.instance.requestManager.checkAndUpdateSession();
-
-			// Read file
-			const content = readFileSync(path, 'utf8');
 			
 			// Folder support
 			if (this.instance.folderSupport) {
@@ -66,13 +66,14 @@ export default class FileWatcher {
 			const file = p.basename(path);
 			if (!this.isAllowedExtension(file)) return;
 
-			if (this.instance.socketManager?.lastUpdatedFile == file) return;
+			// Read file
+			const content = readFileSync(path, 'utf-8');
+
+			// Checking that this chance isn't from the socket
+			if (this.instance.socketManager?.lastUpdatedFile == file && this.instance.socketManager?.lastUpdatedContent == content) return;
 
 			// Check session
 			await this.instance.requestManager.checkAndUpdateSession();
-
-			// Read file
-			const content = readFileSync(path, 'utf-8');
 
 			// Folder support
 			if (this.instance.folderSupport) {
