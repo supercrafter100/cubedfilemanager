@@ -4,7 +4,7 @@
   "description": "A CLI that helps scripters easily work on their playerservers on the CubedCraft network.",
   "exports": "./dist/index.js",
   "engines": {
-    "node": ">=12.20.0"
+    "node": ">=16.0.0"
   },
   "repository": {
     "type": "git",
