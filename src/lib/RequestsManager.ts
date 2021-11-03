@@ -435,6 +435,7 @@ export default class RequestManager {
 					this.instance.message_success(`Logged in as ${username}`)
 					resolve(cookie);
 				} else if (response == ResponseTypes.FAILURE) {
+					this.instance.message_error(`Failed to log in as ${username}`)
 					resolve(null);
 				} else if (response == ResponseTypes.TFA) {
 					await this.instance.ask2FACode(html, cookie);
@@ -573,8 +574,19 @@ export default class RequestManager {
 			const isExpired = await this.sessionIsExpired();
 
 			if (isExpired) {
+				this.instance.message_info('Current session expired. Refreshing it!');
+
 				const token = await this.login(this.instance.temp_username!, this.instance.temp_password!);
+
+				if (token == null) {
+					this.instance.message_error('Failed to log back in. Closing system.');
+					process.exit(0);
+				}
+
 				this.instance.sessionToken = token!;
+				this.instance.headers = {
+					cookie: `PHPSESSID=${token};`
+				}
 				await this.selectServer(this.instance.temp_server!);
 			}
 			resolve();
