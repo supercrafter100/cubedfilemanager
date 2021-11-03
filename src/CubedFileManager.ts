@@ -227,6 +227,14 @@ export default class CubedFileManager {
 			const uploader = new BackupLoader(this);
 			await uploader.start();
 			process.exit(0);
+		} 
+		
+		if (this.settingsManager.settings?.autoSync) {
+			this.message_info("autoSync is enabled in CubedCraft.json")
+			this.message_info("Starting to download all scripts from the server...");
+			const downloader = new FileDownloader(this);
+			await downloader.downloadFiles("");
+			this.message_success("All files were downloaded")
 		}
 
 		if (this.arguments.livesync || this.settingsManager.settings?.livesync) {

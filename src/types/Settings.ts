@@ -6,4 +6,5 @@ export interface Settings {
 	baseDir: string | undefined;
 	livesync: boolean | undefined;
 	extensions: string[];
+	autoSync: boolean | undefined;
 }

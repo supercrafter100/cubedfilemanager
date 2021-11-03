@@ -16,7 +16,8 @@ export default class SettingsManager {
 		logErrors: false,
 		baseDir: "plugins/Skript/scripts",
 		livesync: false,
-		extensions: [".sk"]
+		extensions: [".sk"],
+		autoSync: false
 	}
 
 	constructor(instance: CubedFileManager) {
