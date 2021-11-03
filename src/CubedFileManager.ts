@@ -124,6 +124,7 @@ export default class CubedFileManager {
 		
 		const response = await this.requestManager.login(username, password);
 		if (response == null) {
+			this.message_error(`Failed to log in as ${username}`)
 			return this.init();
 		}
 
