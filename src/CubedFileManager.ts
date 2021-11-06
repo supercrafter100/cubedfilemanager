@@ -103,7 +103,7 @@ export default class CubedFileManager {
 		let notSaved = !this.settingsManager.exists || !this.settingsManager.settings?.login?.useSavedAccount && (!this.settingsManager.settings?.login?.username || !this.settingsManager.settings?.login?.password)
 
 		let loginMethod: LoginMethods;
-		if (notSaved || this.cryptoManager.username.length < 1 || this.cryptoManager.password.length < 1 || failed)
+		if (notSaved || (this.settingsManager.settings?.login?.useSavedAccount && this.cryptoManager.username.length < 1) || (this.settingsManager.settings?.login?.useSavedAccount && this.cryptoManager.password.length < 1) || failed)
 			loginMethod = await this.askLoginMethod();
 		else loginMethod = LoginMethods.AUTOMATIC;
 
