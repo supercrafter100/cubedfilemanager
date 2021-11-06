@@ -11,6 +11,11 @@ export default class SettingsManager {
 
 	private defaultSettings: Settings = {
 		username: '',
+		login: {
+			useSavedAccount: true,
+			username: '',
+			password: ''
+		},
 		server: '',
 		folderSupport: false,
 		logErrors: false,

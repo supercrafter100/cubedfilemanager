@@ -1,7 +1,8 @@
 export enum LoginMethods {
 	MANUAL,
 	RECONFIGURE,
-	AUTOMATIC
+	AUTOMATIC,
+	CUSTOM
 }
 
 export enum ResponseTypes {
