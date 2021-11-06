@@ -98,8 +98,12 @@ export default class CubedFileManager {
 		/**
 		 * Logging into their account & getting a session ID
 		 */
+
+		// Gets boolean of whether or not they have pre-entered login details either in CubedCraft.json or saved in CFM that they wish to use
+		let notSaved = !this.settingsManager.exists || !this.settingsManager.settings?.login?.useSavedAccount && (!this.settingsManager.settings?.login?.username || !this.settingsManager.settings?.login?.password)
+
 		let loginMethod: LoginMethods;
-		if (!this.settingsManager.exists || this.cryptoManager.username.length < 1 || this.cryptoManager.password.length < 1 || failed) 
+		if (notSaved || (this.settingsManager.settings?.login?.useSavedAccount && this.cryptoManager.username.length < 1) || (this.settingsManager.settings?.login?.useSavedAccount && this.cryptoManager.password.length < 1) || failed)
 			loginMethod = await this.askLoginMethod();
 		else loginMethod = LoginMethods.AUTOMATIC;
 
@@ -109,9 +113,17 @@ export default class CubedFileManager {
 		if (loginMethod == LoginMethods.MANUAL) {
 			username = await normalQuestion('What is your username? ');
 			password = await hiddenQuestion('What is your password? ');
-		} else if (loginMethod == LoginMethods.AUTOMATIC || loginMethod == LoginMethods.RECONFIGURE) {
+		} else if (loginMethod == LoginMethods.RECONFIGURE) {
 			username = this.cryptoManager.username;
 			password = this.cryptoManager.password;
+		} else if (loginMethod == LoginMethods.AUTOMATIC) {
+			if (this.settingsManager.settings?.login?.useSavedAccount) {
+				username = this.cryptoManager.username;
+				password = this.cryptoManager.password;
+			} else {
+				username = this.settingsManager.settings?.login?.username
+				password = this.settingsManager.settings?.login?.password
+			}
 		}
 		
 		if (!username || !password) {
