@@ -432,13 +432,16 @@ export default class RequestManager {
 				.catch(e => console.log(e));
 
 				if (response == ResponseTypes.SUCCESS) {
-					this.instance.message_success(`Logged in as ${username}`)
+					this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}` })
+					this.instance.message_success(`Logged in as ${this.instance.username}`)
 					resolve(cookie);
 				} else if (response == ResponseTypes.FAILURE) {
 					this.instance.message_error(`Failed to log in as ${username}`)
 					resolve(null);
 				} else if (response == ResponseTypes.TFA) {
 					await this.instance.ask2FACode(html, cookie);
+					this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}` })
+					this.instance.message_success(`Logged in as ${this.instance.username}`)
 					resolve(cookie);
 				}
 			})
@@ -465,7 +468,7 @@ export default class RequestManager {
 					cookie: `PHPSESSID=${cookie};`
 				}, 
 				body: params as any 
-			}).then((res) => res.text()).then((res) => res.includes('Invalid code, please try again.'));
+			}).then((res) => res.text()).then((res) => !res.includes('Invalid code, please try again.'));
 			
 			resolve(success);
 		})
@@ -590,6 +593,24 @@ export default class RequestManager {
 				await this.selectServer(this.instance.temp_server!);
 			}
 			resolve();
+		})
+	}
+
+	/**
+	 * Gets the username of the currently logged in user
+	 * @returns {Promise<string>} A promise that resolves to the username of the logged in user as a string
+	 */
+	public getUsername(headers: object = this.instance.headers) : Promise<string> {
+		return new Promise(async (resolve) => {
+			const url = `https://playerservers.com/account/`;
+
+			const res = await fetch(url, { headers: headers as any });
+			const html = await res.text();
+
+			const $ = cheerio.load(html);
+			const element = $(`body > div > nav > ul.navbar-nav.ml-auto > li.nav-item.dropdown > a`)
+
+			resolve(element.text().trim())
 		})
 	}
 }
