@@ -10,7 +10,6 @@ export default class SettingsManager {
 	public exists: boolean = false;
 
 	private defaultSettings: Settings = {
-		username: '',
 		login: {
 			useSavedAccount: true,
 			username: '',
@@ -54,7 +53,7 @@ export default class SettingsManager {
 	public createJsonFile() {
 		const exists = fs.existsSync(path.join(this.instance.rootDir, 'CubedCraft.json'));
 		if (exists) {
-			this.instance.message_error(" CubedCraft.json already exists!");
+			this.instance.message_error("CubedCraft.json already exists!");
 			return;
 		}
 
