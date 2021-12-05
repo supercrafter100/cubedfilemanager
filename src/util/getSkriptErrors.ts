@@ -1,6 +1,12 @@
 export default (console_data: string, name: string) => {
 
-	console_data = console_data.replace(/<br \/>/g, "").replace(/&quot;/g,'"')
+	console_data = console_data
+	.replace(/<br \/>/g, "")
+	.replace(/&quot;/g,'"')
+	.replace(/&amp;/g, '&')
+	.replace(/&lt;/g, '<')
+	.replace(/&gt;/g, '>')
+	
 	const lines = console_data.split('\n');
 
 	let reading_error = false;
