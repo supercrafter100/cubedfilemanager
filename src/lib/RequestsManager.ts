@@ -349,6 +349,14 @@ export default class RequestManager {
 			const json = await fetch(url, { headers: headers as any })
 			.then((res) => res.json());
 
+			if (json.error && json.code === 5) {
+				this.instance.message_error(`Folder "${this.instance.baseDir}" does not exist on the server!`)
+				process.exit()
+			} else if (json.error) {
+				this.instance.message_error(`An unknown error occured fetching files from "${this.instance.baseDir}"!`)
+				process.exit()
+			}
+
 			// Checking if the file exists
 			const exists = json.files.some((c: any) => c.filename === file);
 			resolve(exists);
