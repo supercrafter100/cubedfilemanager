@@ -240,8 +240,8 @@ export default class RequestManager {
 
 			const deleteURL = "https://playerservers.com/dashboard/filemanager/&action=delete";
 			const params = new URLSearchParams();
-			params.append("targetFile", `/${this.instance.baseDir}/${path}/-${name}`);
-			params.append("target", `/${this.instance.baseDir}/${path}/-${name}`);
+			params.append("targetFile", `/${this.instance.baseDir}/${path}/${name.startsWith('-') ? name : '-' + name}`);
+			params.append("target", `/${this.instance.baseDir}/${path}/${name.startsWith('-') ? name : '-' + name}`);
 			params.append("action", "delete");
 			params.append("token", editToken);
 
