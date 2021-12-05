@@ -42,7 +42,7 @@ export default class FileWatcher {
 
 		watcher.on('add', async (path) => {
 			const file = p.basename(path);
-			if (!this.isAllowedExtension(file)) return;
+			if (!this.instance.isAllowedExtension(file)) return;
 			
 			// Read file
 			const content = readFileSync(path, 'utf8');
@@ -64,7 +64,7 @@ export default class FileWatcher {
 
 		watcher.on('change', async (path) => {
 			const file = p.basename(path);
-			if (!this.isAllowedExtension(file)) return;
+			if (!this.instance.isAllowedExtension(file)) return;
 
 			// Read file
 			const content = readFileSync(path, 'utf-8');
@@ -88,7 +88,7 @@ export default class FileWatcher {
 
 		watcher.on('unlink', async (path) => {
 			const file = p.basename(path);
-			if (!this.isAllowedExtension(file)) return;
+			if (!this.instance.isAllowedExtension(file)) return;
 
 			if (this.instance.socketManager?.lastUpdatedFile == file) return;
 
@@ -126,14 +126,6 @@ export default class FileWatcher {
             newPath = newPath.replaceAll('\\\\', '\\')
         }
 		return newPath
-	}
-
-	private isAllowedExtension(name: string) : boolean {
-		let isAllowed = false;
-		for (const extension of this.instance.settingsManager.settings!.extensions) {
-			if (name.endsWith(extension)) isAllowed = true;
-		}
-		return isAllowed;
 	}
 }
 
