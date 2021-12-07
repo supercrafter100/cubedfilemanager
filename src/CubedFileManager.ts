@@ -17,6 +17,7 @@ import SocketManager from "./util/SocketManager.js";
 import { existsSync, writeFileSync } from "fs";
 import { join } from "path";
 import BackupLoader from "./util/backupScriptsToServer.js";
+import deleteDefaultScripts from "./util/deleteDefaultScripts.js";
 
 export default class CubedFileManager {
 
@@ -235,7 +236,11 @@ export default class CubedFileManager {
 			const uploader = new BackupLoader(this);
 			await uploader.start();
 			process.exit(0);
-		} 
+		} else if (this.arguments.deletedefaults) {
+			this.message_info("Deleting all default scripts on the server...");
+			await deleteDefaultScripts(this);
+			process.exit(0);
+		}
 		
 		if (this.settingsManager.settings?.autoSync) {
 			this.message_info("autoSync is enabled in CubedCraft.json")
@@ -365,6 +370,16 @@ export default class CubedFileManager {
 				cookie: `PHPSESSID=${response};`
 			}
 		}
+	}
+
+	/*
+		Fix paths to be compliant with how Cubed handles paths
+	*/
+	public fixPath(path: string) : string {
+		path = path.replaceAll('\\', '/')
+		if (path.endsWith('/')) path = path.slice(0, path.length - 1)
+		if (!path.startsWith('/')) path = '/' + path
+		return path
 	}
 
 

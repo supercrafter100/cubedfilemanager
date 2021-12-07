@@ -50,6 +50,7 @@ const helpMessage = `
 			--sync Synchronise all files from the file manager to your machine (will work with folders if there are any in the file manager)
 			--livesync Create a websocket connection with the CubedFileManager server. If anyone working on the same server edits a file and is using cubedfilemanager, it will get updated immediatly on your local filesystem as well.
 			--backup Back all local files to plugins/Skript/backups/backup-<time>/
+			--deletedefaults Removes all default scripts on the server
 			--help -help Show this help menu
 `
 let argv;
