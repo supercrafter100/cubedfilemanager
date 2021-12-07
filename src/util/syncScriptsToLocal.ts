@@ -16,6 +16,11 @@ export default class FileDownloader {
         // Get all files in the file manager
         const url = `https://playerservers.com/queries/list_files/?dir=/plugins/Skript/scripts${dir}`;
         const json: any = await fetch(url, { headers: this.instance.headers as any }).then((res) => res.json());
+      
+        if (json.error) {
+            this.instance.message_error('An unknown error occured when downloading files from the server.')
+            process.exit()
+        }
 
         // Looping through all files
         for (const file of json.files) {
