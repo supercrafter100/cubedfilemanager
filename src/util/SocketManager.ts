@@ -38,8 +38,8 @@ export default class SocketManager {
     } 
 
     private async handle_handleFileCreateEvent(username: string, name: string, content: string, path: string) {
-        if (!this.isAllowedExtension(name)) return
-        if (!this.isAllowedExtension(path)) return
+        if (!this.instance.isAllowedExtension(name)) return
+        if (!this.instance.isAllowedExtension(path)) return
 
         this.instance.message_info(`Incoming file creation of file ${name} (by ${username})`);
         this.lastUpdatedFile = name;
@@ -52,8 +52,8 @@ export default class SocketManager {
     }
 
     private async handle_handleFileEditEvent(username: string, name: string, content: string, path: string) {
-        if (!this.isAllowedExtension(name)) return
-        if (!this.isAllowedExtension(path)) return
+        if (!this.instance.isAllowedExtension(name)) return
+        if (!this.instance.isAllowedExtension(path)) return
 
         this.instance.message_info(`Incoming file edit of file ${name} (by ${username})`);
         this.lastUpdatedFile = name;
@@ -65,8 +65,8 @@ export default class SocketManager {
     }
 
     private async handle_handleFileDeleteEvent(username: string, name: string, path: string) {
-        if (!this.isAllowedExtension(name)) return
-        if (!this.isAllowedExtension(path)) return
+        if (!this.instance.isAllowedExtension(name)) return
+        if (!this.instance.isAllowedExtension(path)) return
 
         this.instance.message_info(`Incoming file delete of file ${name} (by ${username})`);
         this.lastUpdatedFile = name;
@@ -76,12 +76,4 @@ export default class SocketManager {
             unlinkSync(writePath);
         }
     }
-
-    private isAllowedExtension(name: string) : boolean {
-		let isAllowed = false;
-		for (const extension of this.instance.settingsManager.settings!.extensions) {
-			if (name.endsWith(extension)) isAllowed = true;
-		}
-		return isAllowed;
-	}
 }
