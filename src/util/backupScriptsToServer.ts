@@ -12,6 +12,8 @@ export default class BackupLoader {
     }
 
     public async start() {
+        this.manager.requestManager.sendCommand(`sendmsgtoops &e${this.manager.username ? this.manager.username : ""} &fBacking up files.`)
+
         this.manager.baseDir = "plugins/Skript";
         if (!(await this.manager.requestManager.folderExists("/file-backups"))) {
             await this.manager.requestManager.createFolder("", "file-backups");
@@ -41,7 +43,7 @@ export default class BackupLoader {
                 if (this.manager.folderSupport) {
                     await this.manager.utilities.parseFolders(this.preparePath(path.join(dir, files[i])));
                 }
-                await this.manager.requestManager.createFile(files[i], contents, this.preparePath(path.join(dir, files[i])));
+                await this.manager.requestManager.createFile(files[i], contents, this.preparePath(path.join(dir, files[i])), false);
             }
         }
     }

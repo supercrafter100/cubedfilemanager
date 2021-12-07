@@ -405,4 +405,12 @@ export default class CubedFileManager {
 	public message_log(msg: string) {
 		console.log(chalk.grey(`[`) + chalk.blue(`${new Date(Date.now()).toLocaleTimeString()}`) + chalk.grey(']') + " " + msg);
 	}
+
+	public isAllowedExtension(name: string) : boolean {
+		let isAllowed = false;
+		for (const extension of this.settingsManager.settings!.extensions) {
+			if (name.endsWith(extension)) isAllowed = true;
+		}
+		return isAllowed;
+	}
 }

@@ -22,9 +22,10 @@ export default class RequestManager {
 	 * @param name The name of te file
 	 * @param content The content of the file
 	 * @param rawPath The path to the file in the file manager
+	 * @param commands Whether or not to run reload and log commands upon create
 	 * @returns Promise that resolves when the file is made
 	 */
-	public createFile(name: string, content: string = "", rawPath: string) : Promise<void> {
+	public createFile(name: string, content: string = "", rawPath: string, commands: boolean = true) : Promise<void> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers;
 
@@ -73,9 +74,11 @@ export default class RequestManager {
 					spin.stop();
 					this.instance.message_log(`Created file ${fileName}.${fileExtension}`)
 
-					await this.sendCommand(`sk reload ${this.instance.folderSupport ? `${path}/${name}` : name}`)
-					await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fCreated${content.length ? " and enabled" : ""} &b${ this.instance.folderSupport ? `${path}/${name}` : name}`);
-					
+					if (commands) {
+						await this.sendCommand(`sk reload ${this.instance.folderSupport ? `${path}/${name}` : name}`)
+						await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fCreated${content.length ? " and enabled" : ""} &b${ this.instance.folderSupport ? `${path}/${name}` : name}`);
+					}
+
 					resolve();
 				})	
 			})
@@ -348,6 +351,14 @@ export default class RequestManager {
 			const url = `https://playerservers.com/queries/list_files/?dir=/${this.instance.baseDir}${dir}`;
 			const json = await fetch(url, { headers: headers as any })
 			.then((res) => res.json());
+
+			if (json.error && json.code === 5) {
+				this.instance.message_error(`Folder "${this.instance.baseDir}" does not exist on the server!`)
+				process.exit()
+			} else if (json.error) {
+				this.instance.message_error(`An unknown error occured fetching files from "${this.instance.baseDir}"!`)
+				process.exit()
+			}
 
 			// Checking if the file exists
 			const exists = json.files.some((c: any) => c.filename === file);
