@@ -78,10 +78,6 @@ export default class CubedFileManager {
 			this.folderSupport = true;
 		} 
 
-		if (this.arguments.name || this.arguments.n || this.settingsManager.settings?.username) {
-			this.username = (this.arguments.name || this.arguments.n || this.settingsManager.settings?.username);
-		}
-
 		if (this.arguments.logerrors || this.arguments.logerr || this.settingsManager.settings?.logErrors) {
 			this.logErrors = true;
 		}
@@ -333,7 +329,7 @@ export default class CubedFileManager {
 			const response = await normalQuestion("Enter 2FA code from your authenticator app: ");
 
 			// Attempt to run it through the 2FA stuff
-			const success = this.requestManager.submit2FACode(response, html, cookie);
+			const success = await this.requestManager.submit2FACode(response, html, cookie);
 			if (!success) {
 				this.message_error("Invalid 2FA code. Please try again...");
 				return resolve(await this.ask2FACode(html, cookie));
@@ -393,5 +389,13 @@ export default class CubedFileManager {
 
 	public message_log(msg: string) {
 		console.log(chalk.grey(`[`) + chalk.blue(`${new Date(Date.now()).toLocaleTimeString()}`) + chalk.grey(']') + " " + msg);
+	}
+
+	public isAllowedExtension(name: string) : boolean {
+		let isAllowed = false;
+		for (const extension of this.settingsManager.settings!.extensions) {
+			if (name.endsWith(extension)) isAllowed = true;
+		}
+		return isAllowed;
 	}
 }

@@ -1,5 +1,4 @@
 export interface Settings {
-	username: string | undefined,
 	login: {
 		useSavedAccount: boolean | undefined;
 		username: string;
