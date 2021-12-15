@@ -18,12 +18,16 @@ export default class SocketManager {
 
     public connect(url: string) {
         this.socket = io(url);
-
         this.socket.on('connect', () => this.authenticate());
     }
 
     private authenticate() {
         this.socket?.emit("authenticate", this.instance.sessionToken, this.instance.temp_server);
+        this.socket?.on('Unauthorized', () => {
+            this.instance.message_error("Could not start live session. Authentication failed. If this issue persists, create an issue on the github repository...");
+            this.socket?.close();
+        });
+        
         this.socket?.on('authenticated', () => this.setEvents());
     }
 
