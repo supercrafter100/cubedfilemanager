@@ -14,4 +14,4 @@ command /sendmsgtoops [<string>]:
             else:
                 send "&cUsage: /sendmsgtoops <msg>."                        
         else:
-            send "&cYou are lacking the requiried permissions to execute this command."
+            send "&cYou are lacking the required permissions to execute this command."
