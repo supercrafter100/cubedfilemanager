@@ -4,6 +4,7 @@ import CubedFileManager from "../CubedFileManager.js";
 import fetch from 'node-fetch';
 import getSkriptErrors from '../util/getSkriptErrors.js';
 import { ResponseTypes } from '../types/LoginTypes.js';
+import normalQuestion from "../questions/normalQuestion.js";
 
 export default class RequestManager {
 	
@@ -410,9 +411,25 @@ export default class RequestManager {
 	public login(username: string, password: string) : Promise<null|string> {
 		return new Promise(async(resolve) => {
 			const url = 'https://playerservers.com/login';
-			await fetch(url)
+			await fetch(url, {
+				headers: {
+					cookie: this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``,
+					'user-agent': this.instance.userAgent
+				}
+			})
 			.then(async (res) => {
 				const html = await res.text();
+
+				// Cloudflare challenge
+				if (html.includes('Please Wait... | Cloudflare')) {
+					this.instance.message_warning('PlayerServers.com appears to have attack mode enabled.')
+					this.instance.message_info('Please open https://playerservers.com in your browser, complete the Cloudflare challenge and then find the cookie named "cf_clearance".')
+					this.instance.message_warning('Please note: this fix is far from perfect and issues could still occur.')
+					this.instance.cf_clearance = (await normalQuestion('Please enter the "cf_clearance" cookie: ')).trim();
+					this.instance.userAgent = (await normalQuestion('Please enter your browser user-agent (you can find this at https://www.whatismybrowser.com/detect/what-is-my-user-agent/): ')).trim()
+					return this.login(username, password).then(result => resolve(result))
+				}
+
 				const $ = cheerio.load(html);
 				const requestToken = $("input[name=token]").val();
 				
@@ -431,7 +448,8 @@ export default class RequestManager {
 					method: 'POST',
 					body: params as any,
 					headers: {
-						cookie: `PHPSESSID=${cookie};`
+						cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
+						'user-agent': this.instance.userAgent
 					}
 				})
 				.then((res) => res.text())
@@ -443,7 +461,7 @@ export default class RequestManager {
 				.catch(e => console.log(e));
 
 				if (response == ResponseTypes.SUCCESS) {
-					this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}` })
+					this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`, 'user-agent': this.instance.userAgent })
 					this.instance.message_success(`Logged in as ${this.instance.username}`)
 					resolve(cookie);
 				} else if (response == ResponseTypes.FAILURE) {
@@ -451,7 +469,7 @@ export default class RequestManager {
 					resolve(null);
 				} else if (response == ResponseTypes.TFA) {
 					await this.instance.ask2FACode(html, cookie);
-					this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}` })
+					this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`, 'user-agent': this.instance.userAgent })
 					this.instance.message_success(`Logged in as ${this.instance.username}`)
 					resolve(cookie);
 				}
@@ -459,7 +477,7 @@ export default class RequestManager {
 		});
 	}
 
-	public submit2FACode(code: string, html: string, cookie: string) : Promise<boolean> {
+	public submit2FACode(code: string, html: string, headers: object = this.instance.headers) : Promise<boolean> {
 		return new Promise(async (resolve) => {
 			const url = 'https://playerservers.com/login';
 			const $ = cheerio.load(html);
@@ -475,9 +493,7 @@ export default class RequestManager {
 			// Fetch 2nd time to actually login
 			const success = await fetch(url, {
 				method: 'POST',
-				headers: {
-					cookie: `PHPSESSID=${cookie};`
-				}, 
+				headers: headers as any,
 				body: params as any 
 			}).then((res) => res.text()).then((res) => !res.includes('Invalid code, please try again.'));
 			
