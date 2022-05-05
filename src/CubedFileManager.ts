@@ -42,6 +42,9 @@ export default class CubedFileManager {
 	public temp_password: string | undefined;
 	public temp_server: number | undefined;
 
+	public cf_clearance: string | undefined;
+	public userAgent: string;
+
 	constructor(rootDir: string, args: ParsedArgs) {
 
 		if (rootDir === ".") {
@@ -63,6 +66,8 @@ export default class CubedFileManager {
 		this.settingsManager.init();
 		this.parseArguments();
 		this.cryptoManager.init();
+
+		this.userAgent = 'CubedFileManager'
 
 		this.init();
 	}
@@ -130,7 +135,7 @@ export default class CubedFileManager {
 
 		this.temp_username = username;
 		this.temp_password = password;
-		
+
 		const response = await this.requestManager.login(username, password);
 		if (response == null) {
 			return this.init(true);
@@ -162,7 +167,8 @@ export default class CubedFileManager {
 	
 		this.sessionToken = response;
 		this.headers = {
-			cookie: `PHPSESSID=${response};`
+			cookie: `PHPSESSID=${response}; ${this.cf_clearance ? `cf_clearance=${this.cf_clearance}` : ``}`,
+			'user-agent': this.userAgent
 		}
 
 		/**
@@ -334,7 +340,10 @@ export default class CubedFileManager {
 			const response = await normalQuestion("Enter 2FA code from your authenticator app: ");
 
 			// Attempt to run it through the 2FA stuff
-			const success = await this.requestManager.submit2FACode(response, html, cookie);
+			const success = await this.requestManager.submit2FACode(response, html, {
+				'cookie': `PHPSESSID=${cookie}; ${this.cf_clearance ? `cf_clearance=${this.cf_clearance}` : ``}`,
+				'user-agent': this.userAgent
+			});
 			if (!success) {
 				this.message_error("Invalid 2FA code. Please try again...");
 				return resolve(await this.ask2FACode(html, cookie));
@@ -367,7 +376,8 @@ export default class CubedFileManager {
 
 			this.sessionToken = response!;
 			this.headers = {
-				cookie: `PHPSESSID=${response};`
+				cookie: `PHPSESSID=${response}; ${this.cf_clearance ? `cf_clearance=${this.cf_clearance}` : ``}`,
+				'user-agent': this.userAgent
 			}
 		}
 	}
