@@ -525,13 +525,13 @@ export default class RequestManager {
 					names.push(name);
 				})
 	
-				$('tr > td:nth-child(6) > a').each((index, element) => {
+				$('tr > td:nth-child(3) > a').each((index, element) => {
 					const href = $(element).attr('href');
 					if (href) {
 						hrefs.push(href);
 					}
 				})
-	
+				
 				for (let i = 0; i < names.length; i++) {
 					const name = names[i];
 					const id = parseInt(hrefs[i].split('?s=')[1]);
