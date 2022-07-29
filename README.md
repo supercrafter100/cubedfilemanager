@@ -25,6 +25,6 @@ npm install cubedfilemanager -g
 3. After finishing, `cd` into the directory that your scripts are in. If you are using [Visual Studio Code](https://code.visualstudio.com/), opening the folder as your workspace and opening a terminal in there will immediatly open it in that directory. 
 4. Type `cfm` in your terminal. This should start the process and it will guide you through the steps for it to work. If you require to see the help menu of the cli, type `cfm -h`.
 
-## issues
+## Issues
 
 If you encounter any issues, feel free to open an issue in the repository. I'll gladly help you out.
