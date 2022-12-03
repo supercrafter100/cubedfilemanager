@@ -302,8 +302,6 @@ export default class RequestManager {
 			params.append("action", "delete");
 			params.append("token", editToken);
 
-			// console.log(params.toString())
-
 			await fetch(deleteURL, {
 				headers: headers as any,
 				method: "POST",
@@ -450,15 +448,17 @@ export default class RequestManager {
 					headers: {
 						cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
 						'user-agent': this.instance.userAgent
-					}
+					},
+					redirect: 'manual'
 				})
-				.then((res) => res.text())
-				.then((html) => {
-					if (html.includes(`replace("/dashboard/")`)) return ResponseTypes.SUCCESS;
+				.then(async (res) => {
+					if (res.status === 302) return ResponseTypes.SUCCESS;
+
+					const html = await res.text();
 					if (html.includes(`Two Factor Authentication`)) return ResponseTypes.TFA;
 					else return ResponseTypes.FAILURE;
 				})
-				.catch(e => console.log(e));
+				.catch(e => console.error(e));
 
 				if (response == ResponseTypes.SUCCESS) {
 					this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`, 'user-agent': this.instance.userAgent })
@@ -565,12 +565,11 @@ export default class RequestManager {
 	 */
 	public sessionIsExpired() : Promise<boolean> {
 		return new Promise(async (resolve) => {
-			const url = `https://playerservers.com/dashboard/}`;
+			const url = `https://playerservers.com/dashboard/`;
 			resolve(await fetch(url, {
 				headers: this.instance.headers as any
 			})
-			.then((res) => res.text())
-			.then((res) => res.includes('/login/')));
+			.then((res) => res.status === 302));
 		})
 	}
 
@@ -629,15 +628,15 @@ export default class RequestManager {
 	 */
 	public getUsername(headers: object = this.instance.headers) : Promise<string> {
 		return new Promise(async (resolve) => {
-			const url = `https://playerservers.com/account/`;
+			const url = `https://playerservers.com/account`;
 
 			const res = await fetch(url, { headers: headers as any });
 			const html = await res.text();
 
 			const $ = cheerio.load(html);
-			const element = $(`body > div > nav > ul.navbar-nav.ml-auto > li.nav-item.dropdown > a`)
+			const element = $(`#content > nav > ul > li > a`);
 
-			resolve(element.text().trim())
+			resolve(element.text().trim());
 		})
 	}
 }
