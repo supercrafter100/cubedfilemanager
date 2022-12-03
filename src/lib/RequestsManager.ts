@@ -567,7 +567,8 @@ export default class RequestManager {
 		return new Promise(async (resolve) => {
 			const url = `https://playerservers.com/dashboard/`;
 			resolve(await fetch(url, {
-				headers: this.instance.headers as any
+				headers: this.instance.headers as any,
+				redirect: 'manual'
 			})
 			.then((res) => res.status === 302));
 		})
