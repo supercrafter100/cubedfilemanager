@@ -368,7 +368,7 @@ export default class RequestManager {
 	public getConsoleContent(): Promise<string> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers;
-			const url = `https://playerservers.com/dashboard/console-backend/`
+			const url = `https://playerservers.com/queries/console_backend/`
 
 			const data = await fetch(url, {
 				headers: headers as any,
@@ -582,7 +582,7 @@ export default class RequestManager {
 	public sendCommand(cmd: string): Promise<void> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers
-			const url = `https://playerservers.com/dashboard/console-backend/`
+			const url = `https://playerservers.com/queries/console_backend/`
 
 			const params = new URLSearchParams();
 			params.append("sendcmd", cmd);
