@@ -6,6 +6,7 @@ export default (console_data: string, name: string) => {
 	.replace(/&amp;/g, '&')
 	.replace(/&lt;/g, '<')
 	.replace(/&gt;/g, '>')
+	.replace(/&#039;/g, '\'')
 	
 	const lines = console_data.split('\n');
 
