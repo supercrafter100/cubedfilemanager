@@ -657,6 +657,6 @@ function getDeleteToken(html: string) {
 	if (webJavaScript == null) return null;
 
 	// Getting the token (this is really hardcoded but I don't know a more efficient way to extract this)
-	const token = webJavaScript.split('\n')[2].split("token: \"")[1].split("\" });")[0];
+	const token = (webJavaScript.match(/token: \"([\w\d]+)\"/) as RegExpMatchArray)[1];
 	return token;
 } 
