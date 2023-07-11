@@ -525,7 +525,7 @@ export default class RequestManager {
 						names.push(name);
 					})
 
-					$('tr > td:nth-child(6) > a').each((index, element) => {
+					$('tr > td:nth-child(5) > a, tr > td:nth-child(6) > a').each((index, element) => {
 						const href = $(element).attr('href');
 						if (href) {
 							hrefs.push(href);
