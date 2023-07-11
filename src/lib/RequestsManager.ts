@@ -525,7 +525,7 @@ export default class RequestManager {
 						names.push(name);
 					})
 
-					$('tr > td:nth-child(6) > a').each((index, element) => {
+					$('tr > td:nth-child(5) > a, tr > td:nth-child(6) > a').each((index, element) => {
 						const href = $(element).attr('href');
 						if (href) {
 							hrefs.push(href);
@@ -659,4 +659,4 @@ function getDeleteToken(html: string) {
 	// Getting the token (this is really hardcoded but I don't know a more efficient way to extract this)
 	const token = (webJavaScript.match(/token: \"([\w\d]+)\"/) as RegExpMatchArray)[1];
 	return token;
-} 
+}
