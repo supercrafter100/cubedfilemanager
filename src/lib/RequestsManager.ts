@@ -1,13 +1,12 @@
-import { Spinner } from 'clui';
+import { Spinner } from "clui";
 import cheerio from "cheerio";
 import CubedFileManager from "../CubedFileManager.js";
-import fetch from 'node-fetch';
-import getSkriptErrors from '../util/getSkriptErrors.js';
-import { ResponseTypes } from '../types/LoginTypes.js';
+import fetch from "node-fetch";
+import getSkriptErrors from "../util/getSkriptErrors.js";
+import { ResponseTypes } from "../types/LoginTypes.js";
 import normalQuestion from "../questions/normalQuestion.js";
 
 export default class RequestManager {
-
 	private instance: CubedFileManager;
 
 	constructor(instance: CubedFileManager) {
@@ -34,8 +33,8 @@ export default class RequestManager {
 			const spin = new Spinner(`Creating file ${name}...`);
 
 			if (this.instance.folderSupport && rawPath.length > 0) {
-				let normalpath = rawPath.split('\\')
-				path = normalpath.slice(0, normalpath.length - 1).join('/');
+				let normalpath = rawPath.split("\\");
+				path = normalpath.slice(0, normalpath.length - 1).join("/");
 			} else {
 				path = "";
 			}
@@ -70,21 +69,24 @@ export default class RequestManager {
 					await fetch(url, {
 						method: "POST",
 						headers: headers as any,
-						body: params as any
+						body: params as any,
 					}).then(async () => {
 						spin.stop();
-						this.instance.message_log(`Created file ${fileName}.${fileExtension}`)
+						this.instance.message_log(`Created file ${fileName}.${fileExtension}`);
 
 						if (commands) {
-							await this.sendCommand(`sk reload ${this.instance.folderSupport ? `${path}/${name}` : name}`)
-							await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fCreated${content.length ? " and enabled" : ""} &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
+							await this.sendCommand(`sk reload ${this.instance.folderSupport ? `${path}/${name}` : name}`);
+							await this.sendCommand(
+								`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fCreated${
+									content.length ? " and enabled" : ""
+								} &b${this.instance.folderSupport ? `${path}/${name}` : name}`
+							);
 						}
 
 						resolve();
-					})
-				})
-
-		})
+					});
+				});
+		});
 	}
 
 	/**
@@ -97,7 +99,7 @@ export default class RequestManager {
 	public createFolder(dir: string, dirName: string, baseDir: string = this.instance.baseDir): Promise<void> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers;
-			const spin = new Spinner('Creating new folder');
+			const spin = new Spinner("Creating new folder");
 
 			/**
 			 * First fetch is to get the token
@@ -108,7 +110,6 @@ export default class RequestManager {
 			await fetch(url, { headers: headers as any })
 				.then((res) => res.text())
 				.then(async (html) => {
-
 					const $ = cheerio.load(html);
 					const editToken = $("input[name=token]").val();
 
@@ -124,14 +125,14 @@ export default class RequestManager {
 					await fetch(url, {
 						method: "POST",
 						headers: headers as any,
-						body: params as any
+						body: params as any,
 					}).then((e) => {
 						spin.stop();
 						this.instance.message_log(`Created folder ${dirName}`);
 						resolve();
-					})
-				})
-		})
+					});
+				});
+		});
 	}
 
 	/**
@@ -148,8 +149,8 @@ export default class RequestManager {
 			const spin = new Spinner(`Editing file ${name}...`);
 
 			if (this.instance.folderSupport && rawPath.length > 0) {
-				let normalpath = rawPath.split('\\')
-				path = normalpath.slice(0, normalpath.length - 1).join('/');
+				let normalpath = rawPath.split("\\");
+				path = normalpath.slice(0, normalpath.length - 1).join("/");
 			} else {
 				path = "";
 			}
@@ -162,13 +163,12 @@ export default class RequestManager {
 			})
 				.then((res) => res.text())
 				.then(async (html) => {
-
 					/**
 					 * First fetch for getting edit token
 					 */
 
 					const fileExtension = getFileExtension(name);
-					const fileName = name.replace(("." + fileExtension), '');
+					const fileName = name.replace("." + fileExtension, "");
 
 					const $ = cheerio.load(html);
 					const editToken = $("input[name=token]").val();
@@ -186,9 +186,17 @@ export default class RequestManager {
 					}).then(async () => {
 						spin.stop();
 						this.instance.message_log(`Edited file ${name}`);
-						await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fSaved file &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
-						await this.sendCommand(`sk reload ${this.instance.folderSupport ? `${path}/${name}` : name}`)
-						await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fReloaded file &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
+						await this.sendCommand(
+							`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fSaved file &b${
+								this.instance.folderSupport ? `${path}/${name}` : name
+							}`
+						);
+						await this.sendCommand(`sk reload ${this.instance.folderSupport ? `${path}/${name}` : name}`);
+						await this.sendCommand(
+							`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fReloaded file &b${
+								this.instance.folderSupport ? `${path}/${name}` : name
+							}`
+						);
 
 						if (!this.instance.settingsManager.settings?.logErrors) return resolve();
 
@@ -196,17 +204,17 @@ export default class RequestManager {
 						const skript_errors = getSkriptErrors(console_content, name);
 
 						if (skript_errors) {
-							this.instance.message_error('Encountered an error when reloading ' + name);
+							this.instance.message_error("Encountered an error when reloading " + name);
 							for (const line of skript_errors.data.split("\n")) {
-								this.instance.message_error(line)
+								this.instance.message_error(line);
 							}
 							this.instance.message_error(`Script reloaded with ${skript_errors.errors} errors`);
 						}
 
 						resolve();
-					})
-				})
-		})
+					});
+				});
+		});
 	}
 
 	/**
@@ -222,8 +230,8 @@ export default class RequestManager {
 			const spin = new Spinner(`Deleting file ${name}...`);
 
 			if (this.instance.folderSupport && rawPath.length > 0) {
-				let normalpath = rawPath.split('\\')
-				path = normalpath.slice(0, normalpath.length - 1).join('/');
+				let normalpath = rawPath.split("\\");
+				path = normalpath.slice(0, normalpath.length - 1).join("/");
 			} else {
 				path = "";
 			}
@@ -239,30 +247,35 @@ export default class RequestManager {
 
 			const editToken = getDeleteToken(html);
 			if (editToken == null) {
-				return this.instance.message_error("The delete token could not be retrieved. The HTML of the website likely changed. Please report this to Supercrafter100#6600 on discord.");
+				return this.instance.message_error(
+					"The delete token could not be retrieved. The HTML of the website likely changed. Please report this to Supercrafter100#6600 on discord."
+				);
 			}
 
 			const deleteURL = "https://playerservers.com/dashboard/filemanager/&action=delete";
 			const params = new URLSearchParams();
-			params.append("targetFile", `/${this.instance.baseDir}/${path}/${name.startsWith('-') ? name : '-' + name}`);
-			params.append("target", `/${this.instance.baseDir}/${path}/${name.startsWith('-') ? name : '-' + name}`);
+			params.append("targetFile", `/${this.instance.baseDir}/${path}/${name.startsWith("-") ? name : "-" + name}`);
+			params.append("target", `/${this.instance.baseDir}/${path}/${name.startsWith("-") ? name : "-" + name}`);
 			params.append("action", "delete");
 			params.append("token", editToken);
 
 			await fetch(deleteURL, {
 				headers: headers as any,
 				method: "POST",
-				body: params as any
-			})
-				.then(async () => {
-					spin.stop();
+				body: params as any,
+			}).then(async () => {
+				spin.stop();
 
-					this.instance.message_log(`Deleted file ${name}`);
-					await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fDeleted file &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
+				this.instance.message_log(`Deleted file ${name}`);
+				await this.sendCommand(
+					`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fDeleted file &b${
+						this.instance.folderSupport ? `${path}/${name}` : name
+					}`
+				);
 
-					resolve();
-				})
-		})
+				resolve();
+			});
+		});
 	}
 
 	/**
@@ -278,8 +291,8 @@ export default class RequestManager {
 			const spin = new Spinner(`Deleting file ${name}...`);
 
 			if (this.instance.folderSupport && rawPath.length > 0) {
-				let normalpath = rawPath.split('\\')
-				path = normalpath.slice(0, normalpath.length - 1).join('/');
+				let normalpath = rawPath.split("\\");
+				path = normalpath.slice(0, normalpath.length - 1).join("/");
 			} else {
 				path = "";
 			}
@@ -292,7 +305,9 @@ export default class RequestManager {
 
 			const editToken = getDeleteToken(html);
 			if (editToken == null) {
-				return this.instance.message_error("The delete token could not be retrieved. The HTML of the website likely changed. Please report this to Supercrafter100#6600 on discord.");
+				return this.instance.message_error(
+					"The delete token could not be retrieved. The HTML of the website likely changed. Please report this to Supercrafter100#6600 on discord."
+				);
 			}
 
 			const deleteURL = "https://playerservers.com/dashboard/filemanager/&action=delete";
@@ -305,17 +320,20 @@ export default class RequestManager {
 			await fetch(deleteURL, {
 				headers: headers as any,
 				method: "POST",
-				body: params as any
-			})
-				.then(async () => {
-					spin.stop();
+				body: params as any,
+			}).then(async () => {
+				spin.stop();
 
-					this.instance.message_log(`Deleted folder ${name}`);
-					await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fDeleted folder &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
+				this.instance.message_log(`Deleted folder ${name}`);
+				await this.sendCommand(
+					`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fDeleted folder &b${
+						this.instance.folderSupport ? `${path}/${name}` : name
+					}`
+				);
 
-					resolve();
-				})
-		})
+				resolve();
+			});
+		});
 	}
 
 	/**
@@ -325,7 +343,7 @@ export default class RequestManager {
 	 */
 	public folderExists(dir: string): Promise<boolean> {
 		return new Promise(async (resolve) => {
-			const headers = this.instance.headers
+			const headers = this.instance.headers;
 			const url = `https://playerservers.com/queries/list_files/&dir=/${this.instance.baseDir}${dir}`;
 			await fetch(url, { headers: headers as any })
 				.then((res) => res.json())
@@ -334,8 +352,8 @@ export default class RequestManager {
 						resolve(false);
 					}
 					resolve(true);
-				})
-		})
+				});
+		});
 	}
 
 	/**
@@ -348,34 +366,33 @@ export default class RequestManager {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers;
 			const url = `https://playerservers.com/queries/list_files/?dir=/${this.instance.baseDir}${dir}`;
-			const json = await fetch(url, { headers: headers as any })
-				.then((res) => res.json());
+			const json = await fetch(url, { headers: headers as any }).then((res) => res.json());
 
 			if (json.error && json.code === 5) {
-				this.instance.message_error(`Folder "${this.instance.baseDir}" does not exist on the server!`)
-				process.exit()
+				this.instance.message_error(`Folder "${this.instance.baseDir}" does not exist on the server!`);
+				process.exit();
 			} else if (json.error) {
-				this.instance.message_error(`An unknown error occured fetching files from "${this.instance.baseDir}"!`)
-				process.exit()
+				this.instance.message_error(`An unknown error occured fetching files from "${this.instance.baseDir}"!`);
+				process.exit();
 			}
 
 			// Checking if the file exists
 			const exists = json.files.some((c: any) => c.filename === file);
 			resolve(exists);
-		})
+		});
 	}
 
 	public getConsoleContent(): Promise<string> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers;
-			const url = `https://playerservers.com/queries/console_backend/`
+			const url = `https://playerservers.com/queries/console_backend/`;
 
 			const data = await fetch(url, {
 				headers: headers as any,
 			}).then((res) => res.text());
 
 			resolve(data);
-		})
+		});
 	}
 
 	/**
@@ -388,12 +405,12 @@ export default class RequestManager {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers;
 			const url = `https://playerservers.com/dashboard/filemanager/&action=edit&medit=/plugins/Skript/scripts/${path}${file}&dir=/plugins/Skript/scripts${path}`;
-			const html = await fetch(url, { headers: headers as any, }).then((res) => res.text());
+			const html = await fetch(url, { headers: headers as any }).then((res) => res.text());
 
 			const $ = cheerio.load(html);
-			const contents = $('#code').text();
+			const contents = $("#code").text();
 			resolve(contents);
-		})
+		});
 	}
 
 	/**
@@ -408,140 +425,152 @@ export default class RequestManager {
 	 */
 	public login(username: string, password: string): Promise<null | string> {
 		return new Promise(async (resolve) => {
-			const url = 'https://playerservers.com/login';
+			const url = "https://playerservers.com/login";
 			await fetch(url, {
 				headers: {
 					cookie: this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``,
-					'user-agent': this.instance.userAgent
+					"user-agent": this.instance.userAgent,
+				},
+			}).then(async (res) => {
+				const html = await res.text();
+
+				// Cloudflare challenge
+				if (html.includes("Please Wait... | Cloudflare")) {
+					this.instance.message_warning("PlayerServers.com appears to have attack mode enabled.");
+					this.instance.message_info(
+						'Please open https://playerservers.com in your browser, complete the Cloudflare challenge and then find the cookie named "cf_clearance".'
+					);
+					this.instance.message_warning("Please note: this fix is far from perfect and issues could still occur.");
+					this.instance.cf_clearance = (await normalQuestion('Please enter the "cf_clearance" cookie: ')).trim();
+					this.instance.userAgent = (
+						await normalQuestion(
+							"Please enter your browser user-agent (you can find this at https://www.whatismybrowser.com/detect/what-is-my-user-agent/): "
+						)
+					).trim();
+					return this.login(username, password).then((result) => resolve(result));
 				}
-			})
-				.then(async (res) => {
-					const html = await res.text();
 
-					// Cloudflare challenge
-					if (html.includes('Please Wait... | Cloudflare')) {
-						this.instance.message_warning('PlayerServers.com appears to have attack mode enabled.')
-						this.instance.message_info('Please open https://playerservers.com in your browser, complete the Cloudflare challenge and then find the cookie named "cf_clearance".')
-						this.instance.message_warning('Please note: this fix is far from perfect and issues could still occur.')
-						this.instance.cf_clearance = (await normalQuestion('Please enter the "cf_clearance" cookie: ')).trim();
-						this.instance.userAgent = (await normalQuestion('Please enter your browser user-agent (you can find this at https://www.whatismybrowser.com/detect/what-is-my-user-agent/): ')).trim()
-						return this.login(username, password).then(result => resolve(result))
-					}
+				const $ = cheerio.load(html);
+				const requestToken = $("input[name=token]").val();
 
-					const $ = cheerio.load(html);
-					const requestToken = $("input[name=token]").val();
-
-					const cookie = (res.headers as any)
-						.raw()
+				const cookie = (res.headers as any)
+					.raw()
 					["set-cookie"].find((s: string) => s.startsWith("PHPSESSID"))
-						.split(";")[0]
-						.split("=")[1];
+					.split(";")[0]
+					.split("=")[1];
 
-					const params = new URLSearchParams();
-					params.append('username', username);
-					params.append('password', password);
-					params.append('token', requestToken as string);
+				const params = new URLSearchParams();
+				params.append("username", username);
+				params.append("password", password);
+				params.append("token", requestToken as string);
 
-					const response = await fetch(url, {
-						method: 'POST',
-						body: params as any,
-						headers: {
-							cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
-							'user-agent': this.instance.userAgent
-						},
-						redirect: 'manual'
-					})
-						.then(async (res) => {
-							if (res.status === 302) return ResponseTypes.SUCCESS;
-
-							const html = await res.text();
-							if (html.includes(`Two Factor Authentication`)) return ResponseTypes.TFA;
-							else return ResponseTypes.FAILURE;
-						})
-						.catch(e => console.error(e));
-
-					if (response == ResponseTypes.SUCCESS) {
-						this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`, 'user-agent': this.instance.userAgent })
-						this.instance.message_success(`Logged in as ${this.instance.username}`)
-						resolve(cookie);
-					} else if (response == ResponseTypes.FAILURE) {
-						this.instance.message_error(`Failed to log in as ${username}`)
-						resolve(null);
-					} else if (response == ResponseTypes.TFA) {
-						await this.instance.ask2FACode(html, cookie);
-						this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`, 'user-agent': this.instance.userAgent })
-						this.instance.message_success(`Logged in as ${this.instance.username}`)
-						resolve(cookie);
-					}
+				const response = await fetch(url, {
+					method: "POST",
+					body: params as any,
+					headers: {
+						cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
+						"user-agent": this.instance.userAgent,
+					},
+					redirect: "manual",
 				})
+					.then(async (res) => {
+						if (res.status === 302) return ResponseTypes.SUCCESS;
+
+						const html = await res.text();
+						if (html.includes(`Two Factor Authentication`)) return ResponseTypes.TFA;
+						else return ResponseTypes.FAILURE;
+					})
+					.catch((e) => console.error(e));
+
+				if (response == ResponseTypes.SUCCESS) {
+					this.instance.username = await this.getUsername({
+						cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
+						"user-agent": this.instance.userAgent,
+					});
+					this.instance.message_success(`Logged in as ${this.instance.username}`);
+					resolve(cookie);
+				} else if (response == ResponseTypes.FAILURE) {
+					this.instance.message_error(`Failed to log in as ${username}`);
+					resolve(null);
+				} else if (response == ResponseTypes.TFA) {
+					await this.instance.ask2FACode(html, cookie);
+					this.instance.username = await this.getUsername({
+						cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
+						"user-agent": this.instance.userAgent,
+					});
+					this.instance.message_success(`Logged in as ${this.instance.username}`);
+					resolve(cookie);
+				}
+			});
 		});
 	}
 
 	public submit2FACode(code: string, html: string, headers: object = this.instance.headers): Promise<boolean> {
 		return new Promise(async (resolve) => {
-			const url = 'https://playerservers.com/login';
+			const url = "https://playerservers.com/login";
 			const $ = cheerio.load(html);
 
-			// Get the edit token				
+			// Get the edit token
 			const token = $("input[name=token]").val();
 
 			const params = new URLSearchParams();
-			params.append('tfa_code', code);
-			params.append('tfa', "true");
-			params.append('token', token);
+			params.append("tfa_code", code);
+			params.append("tfa", "true");
+			params.append("token", token);
 
 			// Fetch 2nd time to actually login
 			const success = await fetch(url, {
-				method: 'POST',
+				method: "POST",
 				headers: headers as any,
-				body: params as any
-			}).then((res) => res.text()).then((res) => !res.includes('Invalid code, please try again.'));
+				body: params as any,
+			})
+				.then((res) => res.text())
+				.then((res) => !res.includes("Invalid code, please try again."));
 
 			resolve(success);
-		})
+		});
 	}
 
 	/**
 	 * Get all servers the user has access to on their file manager
 	 * @returns Array of all servers the user has access to
 	 */
-	public getServersInDashboard(): Promise<{ name: string, id: number }[]> {
+	public getServersInDashboard(): Promise<{ name: string; id: number }[]> {
 		return new Promise(async (resolve) => {
 			const headers = this.instance.headers;
-			const url = 'https://playerservers.com/account';
+			const url = "https://playerservers.com/account";
 			await fetch(url, {
-				headers: headers as any
+				headers: headers as any,
 			})
 				.then((res) => res.text())
 				.then(async (html) => {
-
 					const links = [];
 					const names: string[] = [];
 					const hrefs: string[] = [];
 
 					const $ = cheerio.load(html);
-					$('tr > td:nth-child(1)').each((index, element) => {
+					$("tr > td:nth-child(1)").each((index, element) => {
 						const name = $(element).text();
 						names.push(name);
-					})
+					});
 
-					$('tr > td:nth-child(5) > a, tr > td:nth-child(6) > a').each((index, element) => {
-						const href = $(element).attr('href');
+					$("tr > td:nth-child(4) > a, tr > td:nth-child(6) > a").each((index, element) => {
+						const href = $(element).attr("href");
 						if (href) {
 							hrefs.push(href);
 						}
-					})
+					});
 
 					for (let i = 0; i < names.length; i++) {
 						const name = names[i];
-						const id = parseInt(hrefs[i].split('?s=')[1]);
+						const id = parseInt(hrefs[i].split("?s=")[1]);
 
-						links.push({ name: name, id: id })
+						links.push({ name: name, id: id });
 					}
 
 					resolve(links);
-				})
-		})
+				});
+		});
 	}
 
 	/**
@@ -553,10 +582,10 @@ export default class RequestManager {
 		return new Promise(async (resolve) => {
 			const url = `https://playerservers.com/dashboard/?s=${id}`;
 			await fetch(url, {
-				headers: this.instance.headers as any
-			})
+				headers: this.instance.headers as any,
+			});
 			resolve();
-		})
+		});
 	}
 
 	/**
@@ -566,12 +595,13 @@ export default class RequestManager {
 	public sessionIsExpired(): Promise<boolean> {
 		return new Promise(async (resolve) => {
 			const url = `https://playerservers.com/dashboard/`;
-			resolve(await fetch(url, {
-				headers: this.instance.headers as any,
-				redirect: 'manual'
-			})
-				.then((res) => res.status === 302));
-		})
+			resolve(
+				await fetch(url, {
+					headers: this.instance.headers as any,
+					redirect: "manual",
+				}).then((res) => res.status === 302)
+			);
+		});
 	}
 
 	/**
@@ -581,18 +611,18 @@ export default class RequestManager {
 	 */
 	public sendCommand(cmd: string): Promise<void> {
 		return new Promise(async (resolve) => {
-			const headers = this.instance.headers
-			const url = `https://playerservers.com/queries/console_backend/`
+			const headers = this.instance.headers;
+			const url = `https://playerservers.com/queries/console_backend/`;
 
 			const params = new URLSearchParams();
 			params.append("sendcmd", cmd);
 			await fetch(url, {
 				method: "POST",
 				headers: headers as any,
-				body: params as any
+				body: params as any,
 			});
 			resolve();
-		})
+		});
 	}
 
 	/**
@@ -604,23 +634,23 @@ export default class RequestManager {
 			const isExpired = await this.sessionIsExpired();
 
 			if (isExpired) {
-				this.instance.message_info('Current session expired. Refreshing it!');
+				this.instance.message_info("Current session expired. Refreshing it!");
 
 				const token = await this.login(this.instance.temp_username!, this.instance.temp_password!);
 
 				if (token == null) {
-					this.instance.message_error('Failed to log back in. Closing system.');
+					this.instance.message_error("Failed to log back in. Closing system.");
 					process.exit(0);
 				}
 
 				this.instance.sessionToken = token!;
 				this.instance.headers = {
-					cookie: `PHPSESSID=${token};`
-				}
+					cookie: `PHPSESSID=${token};`,
+				};
 				await this.selectServer(this.instance.temp_server!);
 			}
 			resolve();
-		})
+		});
 	}
 
 	/**
@@ -638,7 +668,7 @@ export default class RequestManager {
 			const element = $(`#content > nav > ul > li > a`);
 
 			resolve(element.text().trim());
-		})
+		});
 	}
 }
 
