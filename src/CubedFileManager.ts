@@ -3,7 +3,7 @@ import RequestManager from "./lib/RequestsManager.js";
 import SettingsManager from "./lib/SettingsManager.js";
 import FileWatcher from './lib/FileWatcher.js';
 import chalk from "chalk";
-import inquirer from 'inquirer';
+import select from '@inquirer/select';
 import CryptoHandler from "./lib/CryptoHandler.js";
 import { LoginMethods } from "./types/LoginTypes.js";
 import normalQuestion from "./questions/normalQuestion.js";
@@ -12,7 +12,6 @@ import Utility from "./lib/Utility.js";
 import FileUploader from "./util/uploadScriptToDashboard.js";
 import FileDownloader from "./util/syncScriptsToLocal.js";
 import deleteScriptsFolder from "./util/deleteScriptsFolder.js";
-import fetch from 'node-fetch';
 import SocketManager from "./util/SocketManager.js";
 import { existsSync, writeFileSync } from "fs";
 import { join } from "path";
@@ -142,21 +141,15 @@ export default class CubedFileManager {
 		}
 
 		if (loginMethod == LoginMethods.MANUAL) {
-			const choices = [
-				"Yes",
-				"No",
-			];
-			const { save_data } = await inquirer.prompt([
-				{
-					name: 'save_data',
-					prefix: "",
-					type: 'list',
-					pageSize: 2,
-					message: "Do you want to save your login details for future use?",
-					loop: false,
-					choices: choices
-				}
-			]);
+			const save_data = await select({
+				pageSize: 2,
+				message: "Do you want to save your login details for future use?",
+				loop: false,
+				choices: [
+					{ value: 'Yes' },
+					{ value: 'No' }
+				]
+			});
 
 			if (save_data == "Yes") {
 				this.cryptoManager.username = username;
@@ -189,17 +182,12 @@ export default class CubedFileManager {
 		}	
 
 		if (!server_selected) {
-			const server_name = await inquirer.prompt([
-				{
-					name: "server_name",
-					prefix: "",
-					type: "list",
-					pageSize: 5,
-					message: "What server are you working on?",
-					loop: false,
-					choices: servers_list.map(c => c.name),
-				},
-			]).then((o: any) => o.server_name)
+			const server_name = await select({
+				pageSize: 5,
+				message: "What server are you working on?",
+				loop: false,
+				choices: servers_list.map(c => ({ value: c.name })),
+			})
 
 			const server = servers_list.find(c => c.name.toLowerCase() === server_name.toLowerCase());
 			this.temp_server = server?.id!;
@@ -287,17 +275,12 @@ export default class CubedFileManager {
 				`Log in manually`
 			];
 
-			const { startup_choice } = await inquirer.prompt([
-				{
-					name: 'startup_choice',
-					prefix: "",
-					type: 'list',
-					pageSize: 3,
-					message: "How would you like to start the system?",
-					loop: false,
-					choices: choices
-				}
-			]);
+			const startup_choice = await select({
+				pageSize: 3,
+				message: "How would you like to start the system?",
+				loop: false,
+				choices: choices.map(v => ({ value: v }))
+			});
 
 			if (startup_choice == "Change username and password for auto log in") {
 
@@ -317,7 +300,7 @@ export default class CubedFileManager {
 
 	private askLiveSyncPermission() : Promise<boolean> {
 		return new Promise(async (resolve) => {
-			const path = join(__dirname, './sync_permission')
+			const path = join(import.meta.dirname, './sync_permission')
 			if (existsSync(path)) return resolve(true);
 
 			const response = await normalQuestion("By using live sync, temporary access to your account must be granted to the server, do you agree to this? (y/n) ").then((response) => response.toLowerCase());

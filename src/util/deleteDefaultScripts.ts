@@ -1,5 +1,4 @@
 import CubedFileManager from "../CubedFileManager";
-import fetch from "node-fetch";
 
 export default async (instance: CubedFileManager) : Promise<void> => {
     return new Promise(async (resolve) => {

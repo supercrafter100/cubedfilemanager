@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import CubedFileManager from "../CubedFileManager.js";
-import fetch from 'node-fetch';
 import { join } from "path";
 
 export default class FileDownloader {
