@@ -654,7 +654,7 @@ export default class RequestManager {
 			const isExpired = await this.sessionIsExpired();
 
 			if (isExpired) {
-				this.updateSession();
+				await this.updateSession();
 			}
 			resolve();
 		})
