@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import figlet from 'figlet';
 import chalk from 'chalk';
 import { readFileSync } from 'fs';
 import update_notifier from 'update-notifier';
@@ -14,17 +13,17 @@ import minimist from 'minimist';
  * Make sure user is on a compatible NodeJS version
  */
 
-if (typeof process !== 'undefined' && parseInt(process.versions.node.split('.')[0]) < 16) {
+if (typeof process !== 'undefined' && parseInt(process.versions.node.split('.')[0]) < 18) {
 	console.error(chalk.red('CubedFileManager is unable to start due to an issue that must be resolved.'))
 	console.error(chalk.grey('[') + chalk.redBright("x") + chalk.grey("]") + " " + 'Your Node.js version is currently', process.versions.node)
-	console.error(chalk.grey('[') + chalk.redBright("x") + chalk.grey("]") + " " + 'Please update it to version 16 or higher from https://nodejs.org/ to be able to use CubedFileManager!')
+	console.error(chalk.grey('[') + chalk.redBright("x") + chalk.grey("]") + " " + 'Please update it to version 18 or higher from https://nodejs.org/ to be able to use CubedFileManager!')
 	process.exit(1)
 }
 
 /**
  * Notify users if a new update is ready
  */
-const pkg = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
+const pkg = JSON.parse(readFileSync(join(import.meta.dirname, '../package.json'), 'utf8'));
 update_notifier({ pkg, updateCheckInterval: 0 }).notify({ isGlobal: true });
 
 /**
@@ -32,7 +31,13 @@ update_notifier({ pkg, updateCheckInterval: 0 }).notify({ isGlobal: true });
  */
 console.log(
 	chalk.yellow(
-	  figlet.textSync('CubedFileManager', { horizontalLayout: 'full' })
+		// Banner generated via figlet
+		'   ____           _                  _   _____   _   _          __  __                                               \n' +
+  		'  / ___|  _   _  | |__     ___    __| | |  ___| (_) | |   ___  |  \\/  |   __ _   _ __     __ _    __ _    ___   _ __ \n' +
+  		" | |     | | | | | '_ \\   / _ \\  / _` | | |_    | | | |  / _ \\ | |\\/| |  / _` | | '_ \\   / _` |  / _` |  / _ \\ | '__|\n" +
+  		' | |___  | |_| | | |_) | |  __/ | (_| | |  _|   | | | | |  __/ | |  | | | (_| | | | | | | (_| | | (_| | |  __/ | |   \n' +
+  		'  \\____|  \\__,_| |_.__/   \\___|  \\__,_| |_|     |_| |_|  \\___| |_|  |_|  \\__,_| |_| |_|  \\__,_|  \\__, |  \\___| |_|   \n' +
+  		'                                                                                                 |___/               '
 	)
 );
 /**

@@ -1,10 +1,9 @@
-import { Spinner } from 'clui';
 import cheerio from "cheerio";
 import CubedFileManager from "../CubedFileManager.js";
-import fetch from 'node-fetch';
 import getSkriptErrors from '../util/getSkriptErrors.js';
 import { ResponseTypes } from '../types/LoginTypes.js';
 import normalQuestion from "../questions/normalQuestion.js";
+import Spinner from "../util/Spinner.js";
 
 export default class RequestManager {
 
@@ -43,8 +42,18 @@ export default class RequestManager {
 			const url = `https://playerservers.com/dashboard/filemanager/?action=new&dir=/${this.instance.baseDir}/${path}`;
 			spin.start();
 			await fetch(url, { headers: headers as any })
-				.then((res) => res.text())
+				.then(async (res) => {
+					// Check if session expired
+					if (res.status === 302) {
+						spin.stop();
+						await this.updateSession();
+						resolve(this.createFile(name, content, rawPath, commands));
+					}
+					return res.text();
+				})
 				.then(async (html) => {
+					if (html === '') return;
+
 					/**
 					 * First fetch is to get the edit token
 					 */
@@ -74,13 +83,12 @@ export default class RequestManager {
 					}).then(async () => {
 						spin.stop();
 						this.instance.message_log(`Created file ${fileName}.${fileExtension}`)
+						resolve();
 
 						if (commands) {
 							await this.sendCommand(`sk reload ${this.instance.folderSupport ? `${path}/${name}` : name}`)
 							await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fCreated${content.length ? " and enabled" : ""} &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
 						}
-
-						resolve();
 					})
 				})
 
@@ -106,8 +114,17 @@ export default class RequestManager {
 			const url = `https://playerservers.com/dashboard/filemanager/?action=new_folder&dir=/${baseDir}${dir}`;
 
 			await fetch(url, { headers: headers as any })
-				.then((res) => res.text())
+				.then(async (res) => {
+					// Check if session expired
+					if (res.status === 302) {
+						spin.stop();
+						await this.updateSession();
+						resolve(this.createFolder(dir, dirName, baseDir));
+					}
+					return res.text();
+				})
 				.then(async (html) => {
+					if (html === '') return;
 
 					const $ = cheerio.load(html);
 					const editToken = $("input[name=token]").val();
@@ -158,10 +175,20 @@ export default class RequestManager {
 			spin.start();
 
 			await fetch(url, {
-				headers: headers as any,
+				headers: headers,
+				redirect: 'manual'
 			})
-				.then((res) => res.text())
+				.then(async (res) => {
+					// Check if session expired
+					if (res.status === 302) {
+						spin.stop();
+						await this.updateSession();
+						resolve(this.editFile(name, content, rawPath));
+					}
+					return res.text();
+				})
 				.then(async (html) => {
+					if (html === '') return;
 
 					/**
 					 * First fetch for getting edit token
@@ -186,6 +213,8 @@ export default class RequestManager {
 					}).then(async () => {
 						spin.stop();
 						this.instance.message_log(`Edited file ${name}`);
+						resolve();
+
 						await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fSaved file &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
 						await this.sendCommand(`sk reload ${this.instance.folderSupport ? `${path}/${name}` : name}`)
 						await this.sendCommand(`sendmsgtoops &e${this.instance.username ? this.instance.username : ""} &fReloaded file &b${this.instance.folderSupport ? `${path}/${name}` : name}`);
@@ -202,8 +231,6 @@ export default class RequestManager {
 							}
 							this.instance.message_error(`Script reloaded with ${skript_errors.errors} errors`);
 						}
-
-						resolve();
 					})
 				})
 		})
@@ -431,11 +458,14 @@ export default class RequestManager {
 					const $ = cheerio.load(html);
 					const requestToken = $("input[name=token]").val();
 
-					const cookie = (res.headers as any)
-						.raw()
-					["set-cookie"].find((s: string) => s.startsWith("PHPSESSID"))
-						.split(";")[0]
+					const cookie = res.headers.getSetCookie().find((s: string) => s.startsWith("PHPSESSID"))
+						?.split(";")[0]
 						.split("=")[1];
+
+					if (!cookie) {
+						this.instance.message_error('Could not find "PHPSESSID" cookie in login response.');
+						return resolve(null);
+					}
 
 					const params = new URLSearchParams();
 					params.append('username', username);
@@ -596,6 +626,26 @@ export default class RequestManager {
 	}
 
 	/**
+	 * Updates the session based on a new login
+	 */
+	public async updateSession() {
+		this.instance.message_info('Current session expired. Refreshing it!');
+
+		const token = await this.login(this.instance.temp_username!, this.instance.temp_password!);
+
+		if (token == null) {
+			this.instance.message_error('Failed to log back in. Closing system.');
+			process.exit(0);
+		}
+
+		this.instance.sessionToken = token!;
+		this.instance.headers = {
+			cookie: `PHPSESSID=${token};`
+		}
+		await this.selectServer(this.instance.temp_server!);
+	}
+
+	/**
 	 * Check if a session needs to be updated or not
 	 * @returns {Promise<void>} A promise that resolves once the session has been checked and renewed if neccesary
 	 */
@@ -604,20 +654,7 @@ export default class RequestManager {
 			const isExpired = await this.sessionIsExpired();
 
 			if (isExpired) {
-				this.instance.message_info('Current session expired. Refreshing it!');
-
-				const token = await this.login(this.instance.temp_username!, this.instance.temp_password!);
-
-				if (token == null) {
-					this.instance.message_error('Failed to log back in. Closing system.');
-					process.exit(0);
-				}
-
-				this.instance.sessionToken = token!;
-				this.instance.headers = {
-					cookie: `PHPSESSID=${token};`
-				}
-				await this.selectServer(this.instance.temp_server!);
+				this.updateSession();
 			}
 			resolve();
 		})

@@ -1,17 +1,21 @@
 import { readFileSync } from 'fs';
 import CubedFileManager from "../CubedFileManager.js";
 import chokidar from 'chokidar';
-import { Spinner} from 'clui';
 import p from 'path';
+import Spinner from '../util/Spinner.js';
+import { Mutex } from '../util/Mutex.js';
 export default class FileWatcher {
 
 	private instance: CubedFileManager;
-
 	constructor(instance: CubedFileManager) {
 		this.instance = instance;
 	}
 
 	public init() {
+		// Mutex to ensure only one file is processed at once
+		const mutex = new Mutex();
+		// Set to store files that are currently being processed so that a file is not needlessly processed twice
+		const pendingFiles = new Set<string>();
 
 		const spinner = new Spinner("Enabling file watcher");
 		spinner.start();
@@ -23,7 +27,7 @@ export default class FileWatcher {
 			ignorePermissionErrors: true,
 			
 			awaitWriteFinish: {
-				stabilityThreshold: 1000
+				stabilityThreshold: 50
 			}
 		});
 
@@ -43,73 +47,91 @@ export default class FileWatcher {
 		watcher.on('add', async (path) => {
 			const file = p.basename(path);
 			if (!this.instance.isAllowedExtension(file)) return;
-			
-			// Read file
-			const content = readFileSync(path, 'utf8');
 
-			if (this.instance.socketManager?.lastUpdatedFile == file && this.instance.socketManager?.lastUpdatedContent == content) return;
+			pendingFiles.add(path);
+			await mutex.lock();
 
-			// Check session
-			await this.instance.requestManager.checkAndUpdateSession();
-			
-			// Folder support
-			if (this.instance.folderSupport) {
-				await this.instance.utilities.parseFolders(this.preparePath(path));
+			try {
+				pendingFiles.delete(path);
+
+				// Read file
+				const content = readFileSync(path, 'utf8');
+
+				if (this.instance.socketManager?.lastUpdatedFile == file && this.instance.socketManager?.lastUpdatedContent == content) return;
+
+				// Folder support
+				if (this.instance.folderSupport) {
+					await this.instance.utilities.parseFolders(this.preparePath(path));
+				}
+
+				// Create the file
+				await this.instance.requestManager.createFile(file, content, this.preparePath(path));
+				this.instance.socketManager?.write("file_create", file, content, this.preparePath(path))
+			} finally {
+				this.instance.headers = {};
+				mutex.release();
 			}
-
-			// Create the file
-			await this.instance.requestManager.createFile(file, content, this.preparePath(path));
-			this.instance.socketManager?.write("file_create", file, content, this.preparePath(path))
 		});
 
 		watcher.on('change', async (path) => {
 			const file = p.basename(path);
 			if (!this.instance.isAllowedExtension(file)) return;
 
-			// Read file
-			const content = readFileSync(path, 'utf-8');
+			if (pendingFiles.has(path)) return;
+			pendingFiles.add(path);
+			await mutex.lock();
+			pendingFiles.delete(path);
 
-			// Checking that this chance isn't from the socket
-			if (this.instance.socketManager?.lastUpdatedFile == file && this.instance.socketManager?.lastUpdatedContent == content) return;
+			try {
+				// Read file
+				const content = readFileSync(path, 'utf-8');
 
-			// Check session
-			await this.instance.requestManager.checkAndUpdateSession();
+				// Checking that this chance isn't from the socket
+				if (this.instance.socketManager?.lastUpdatedFile == file && this.instance.socketManager?.lastUpdatedContent == content) return;
 
-			// Folder support
-			if (this.instance.folderSupport) {
-				await this.instance.utilities.parseFolders(this.preparePath(path));
+				// Folder support
+				if (this.instance.folderSupport) {
+					await this.instance.utilities.parseFolders(this.preparePath(path));
+				}
+
+				// Edit file
+				await this.instance.requestManager.editFile(file, content, this.preparePath(path));
+				this.instance.socketManager?.write("file_edit", file, content, this.preparePath(path))
+			} finally {
+				mutex.release();
 			}
-
-			// Edit file
-			await this.instance.requestManager.editFile(file, content, this.preparePath(path));
-			this.instance.socketManager?.write("file_edit", file, content, this.preparePath(path))
-
 		});
 
 		watcher.on('unlink', async (path) => {
-			const file = p.basename(path);
-			if (!this.instance.isAllowedExtension(file)) return;
+			await mutex.lock();
 
-			if (this.instance.socketManager?.lastUpdatedFile == file) return;
+			try {
+				const file = p.basename(path);
+				if (!this.instance.isAllowedExtension(file)) return;
 
-			// Check session
-			await this.instance.requestManager.checkAndUpdateSession();
+				if (this.instance.socketManager?.lastUpdatedFile == file) return;
 
-			// Delete file
-			await this.instance.requestManager.removeFile(file, this.preparePath(path));
-			this.instance.socketManager?.write("file_delete", file, this.preparePath(path))
+				// Delete file
+				await this.instance.requestManager.removeFile(file, this.preparePath(path));
+				this.instance.socketManager?.write("file_delete", file, this.preparePath(path))
+			} finally {
+				mutex.release();
+			}
 		});
 
 		watcher.on('unlinkDir', async (path) => {
-			const dir = p.basename(path);
+			await mutex.lock();
 
-			if (this.instance.socketManager?.lastUpdatedFile == dir) return;
+			try {
+				const dir = p.basename(path);
 
-			// Check session
-			await this.instance.requestManager.checkAndUpdateSession();
+				if (this.instance.socketManager?.lastUpdatedFile == dir) return;
 
-			// Delete folder
-			await this.instance.requestManager.removeFolder(dir, this.preparePath(path));
+				// Delete folder
+				await this.instance.requestManager.removeFolder(dir, this.preparePath(path));
+			} finally {
+				mutex.release();
+			}
 		})
 	}
 

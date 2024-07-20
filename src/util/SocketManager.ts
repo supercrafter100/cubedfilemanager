@@ -1,5 +1,5 @@
 import CubedFileManager from "../CubedFileManager";
-import { io, Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import { join } from "path";
 import { existsSync, unlinkSync, writeFileSync } from "fs";
 import fs from 'fs';
@@ -16,7 +16,9 @@ export default class SocketManager {
         this.instance = instance;
     }
 
-    public connect(url: string) {
+    public async connect(url: string) {
+        // Lazy load socket.io-client module
+        const io = (await import('socket.io-client')).io;
         this.socket = io(url);
         this.socket.on('connect', () => this.authenticate());
     }
