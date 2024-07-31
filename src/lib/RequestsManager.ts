@@ -1,7 +1,6 @@
 import cheerio from "cheerio";
 import CubedFileManager from "../CubedFileManager.js";
 import getSkriptErrors from '../util/getSkriptErrors.js';
-import { ResponseTypes } from '../types/LoginTypes.js';
 import normalQuestion from "../questions/normalQuestion.js";
 import Spinner from "../util/Spinner.js";
 
@@ -433,102 +432,168 @@ export default class RequestManager {
 	 * @param password The password to login with
 	 * @returns Promise that resolves with the phpsessid token
 	 */
-	public login(username: string, password: string): Promise<null | string> {
-		return new Promise(async (resolve) => {
-			const url = 'https://playerservers.com/login';
-			await fetch(url, {
-				headers: {
-					cookie: this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``,
-					'user-agent': this.instance.userAgent
-				}
-			})
-				.then(async (res) => {
-					const html = await res.text();
+	public async login(username: string, password: string): Promise<null | string> {
+		const spin = new Spinner('Logging in...');
+		spin.start();
 
-					// Cloudflare challenge
-					if (html.includes('Please Wait... | Cloudflare')) {
-						this.instance.message_warning('PlayerServers.com appears to have attack mode enabled.')
-						this.instance.message_info('Please open https://playerservers.com in your browser, complete the Cloudflare challenge and then find the cookie named "cf_clearance".')
-						this.instance.message_warning('Please note: this fix is far from perfect and issues could still occur.')
-						this.instance.cf_clearance = (await normalQuestion('Please enter the "cf_clearance" cookie: ')).trim();
-						this.instance.userAgent = (await normalQuestion('Please enter your browser user-agent (you can find this at https://www.whatismybrowser.com/detect/what-is-my-user-agent/): ')).trim()
-						return this.login(username, password).then(result => resolve(result))
-					}
+		// 1. Get OAuth2 URL and playerservers.com session
+		let resp = await fetch('https://playerservers.com/login/', {
+			headers: {
+				cookie: this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``,
+				'user-agent': this.instance.userAgent
+			},
+			redirect: 'manual',
+		})
 
-					const $ = cheerio.load(html);
-					const requestToken = $("input[name=token]").val();
+		let html = await resp.text();
+		// Cloudflare challenge
+		if (html.includes('Cloudflare')) {
+			spin.stop();
+			this.instance.message_warning('PlayerServers.com appears to have attack mode enabled.')
+			this.instance.message_info('Please open https://playerservers.com in your browser, complete the Cloudflare challenge and then find the cookie named "cf_clearance".')
+			this.instance.message_warning('Please note: this fix is far from perfect and issues could still occur.')
+			this.instance.cf_clearance = (await normalQuestion('Please enter the "cf_clearance" cookie: ')).trim();
+			this.instance.userAgent = (await normalQuestion('Please enter your browser user-agent (you can find this at https://www.whatismybrowser.com/detect/what-is-my-user-agent/): ')).trim()
+			return this.login(username, password);
+		}
 
-					const cookie = res.headers.getSetCookie().find((s: string) => s.startsWith("PHPSESSID"))
-						?.split(";")[0]
-						.split("=")[1];
+		const psSessionId = resp.headers.getSetCookie().find((s: string) => s.startsWith("PHPSESSID"))
+			?.split(";")[0]
+			.split("=")[1];
+		if (!psSessionId) {
+			spin.stop();
+			this.instance.message_error('Could not find "PHPSESSID" cookie in login request.');
+			return null;
+		}
 
-					if (!cookie) {
-						this.instance.message_error('Could not find "PHPSESSID" cookie in login response.');
-						return resolve(null);
-					}
+		const oAuth2Url = resp.headers.get('location');
+		if (!oAuth2Url) {
+			spin.stop();
+			this.instance.message_error('Failed to get OAuth2 URL for dashboard login.');
+			return null;
+		}
 
-					const params = new URLSearchParams();
-					params.append('username', username);
-					params.append('password', password);
-					params.append('token', requestToken as string);
+		// 2. Get login form token and submit
+		resp = await fetch('https://cubedcraft.com/login/', {
+			headers: {
+				cookie: this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``,
+				'user-agent': this.instance.userAgent
+			}
+		})
+		html = await resp.text();
 
-					const response = await fetch(url, {
-						method: 'POST',
-						body: params as any,
-						headers: {
-							cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
-							'user-agent': this.instance.userAgent
-						},
-						redirect: 'manual'
-					})
-						.then(async (res) => {
-							if (res.status === 302) return ResponseTypes.SUCCESS;
+		const sessionId = resp.headers.getSetCookie().find((s: string) => s.startsWith("PHPSESSID"))
+			?.split(";")[0]
+			.split("=")[1];
+		if (!sessionId) {
+			spin.stop();
+			this.instance.message_error('Could not find "PHPSESSID" cookie in login response.');
+			return null;
+		}
 
-							const html = await res.text();
-							if (html.includes(`Two Factor Authentication`)) return ResponseTypes.TFA;
-							else return ResponseTypes.FAILURE;
-						})
-						.catch(e => console.error(e));
+		let $ = cheerio.load(html);
+		let requestToken = $("input[name=token]").val();
 
-					if (response == ResponseTypes.SUCCESS) {
-						this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`, 'user-agent': this.instance.userAgent })
-						this.instance.message_success(`Logged in as ${this.instance.username}`)
-						resolve(cookie);
-					} else if (response == ResponseTypes.FAILURE) {
-						this.instance.message_error(`Failed to log in as ${username}`)
-						resolve(null);
-					} else if (response == ResponseTypes.TFA) {
-						await this.instance.ask2FACode(html, cookie);
-						this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${cookie}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`, 'user-agent': this.instance.userAgent })
-						this.instance.message_success(`Logged in as ${this.instance.username}`)
-						resolve(cookie);
-					}
-				})
-		});
+		const params = new URLSearchParams();
+		params.append('username', username);
+		params.append('password', password);
+		params.append('token', requestToken as string);
+
+		resp = await fetch('https://cubedcraft.com/login/', {
+			method: 'POST',
+			body: params,
+			headers: {
+				cookie: `PHPSESSID=${sessionId}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
+				'user-agent': this.instance.userAgent
+			},
+			redirect: 'manual'
+		})
+
+		// If login succeeded, status code is 302, so if it's not, something went wrong
+		if (resp.status !== 302) {
+			html = await resp.text();
+			if (html.includes(`Two Factor Authentication`)) {
+				spin.stop();
+				await this.instance.ask2FACode(html, sessionId);
+				spin.start();
+			} else {
+				spin.stop();
+				this.instance.message_error(`Failed to log in as ${username}`);
+				return null;
+			}
+		}
+
+		// 3. Get OAuth2 form token and submit
+		resp = await fetch(oAuth2Url, {
+			headers: {
+				cookie: `PHPSESSID=${sessionId}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
+				'user-agent': this.instance.userAgent
+			},
+			redirect: 'manual',
+		})
+		html = await resp.text();
+
+		$ = cheerio.load(html);
+		requestToken = $("input[name=token]").val();
+
+		resp = await fetch(oAuth2Url, {
+			method: 'POST',
+			headers: {
+				cookie: `PHPSESSID=${sessionId}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
+				'user-agent': this.instance.userAgent
+			},
+			body: new URLSearchParams({
+				token: requestToken
+			}),
+			redirect: 'manual'
+		})
+		if (resp.status !== 302) {
+			spin.stop();
+			this.instance.message_error('Failed to authorize PlayerServers.com login.')
+			return null;
+		}
+		const grantRedemptionUrl = resp.headers.get('location')!;
+
+		// 4. Redeem OAuth2 grant
+		resp = await fetch(grantRedemptionUrl, {
+			headers: {
+				cookie: `PHPSESSID=${psSessionId}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`,
+				'user-agent': this.instance.userAgent
+			},
+			redirect: 'manual'
+		})
+
+		this.instance.username = await this.getUsername({ cookie: `PHPSESSID=${psSessionId}; ${this.instance.cf_clearance ? `cf_clearance=${this.instance.cf_clearance}` : ``}`, 'user-agent': this.instance.userAgent })
+		spin.stop();
+
+		this.instance.message_success(`Logged in as ${this.instance.username}`)
+		return psSessionId;
 	}
 
-	public submit2FACode(code: string, html: string, headers: object = this.instance.headers): Promise<boolean> {
-		return new Promise(async (resolve) => {
-			const url = 'https://playerservers.com/login';
-			const $ = cheerio.load(html);
+	public async submit2FACode(code: string, html: string, headers: object = this.instance.headers): Promise<boolean> {
+		const spin = new Spinner('Submitting 2FA code...');
+		spin.start();
 
-			// Get the edit token				
-			const token = $("input[name=token]").val();
+		const url = 'https://cubedcraft.com/login';
+		const $ = cheerio.load(html);
 
-			const params = new URLSearchParams();
-			params.append('tfa_code', code);
-			params.append('tfa', "true");
-			params.append('token', token);
+		// Get the edit token				
+		const token = $("input[name=token]").val();
 
-			// Fetch 2nd time to actually login
-			const success = await fetch(url, {
-				method: 'POST',
-				headers: headers as any,
-				body: params as any
-			}).then((res) => res.text()).then((res) => !res.includes('Invalid code, please try again.'));
+		const params = new URLSearchParams();
+		params.append('tfa_code', code);
+		params.append('tfa', "true");
+		params.append('token', token);
 
-			resolve(success);
-		})
+		// Fetch 2nd time to actually login
+		const success = await fetch(url, {
+			method: 'POST',
+			headers: headers as any,
+			body: params as any
+		}).then((res) => res.text()).then((res) => !res.includes('Invalid code, please try again.'));
+
+		spin.stop();
+		return success;
 	}
 
 	/**
@@ -664,18 +729,14 @@ export default class RequestManager {
 	 * Gets the username of the currently logged in user
 	 * @returns {Promise<string>} A promise that resolves to the username of the logged in user as a string
 	 */
-	public getUsername(headers: object = this.instance.headers): Promise<string> {
-		return new Promise(async (resolve) => {
-			const url = `https://playerservers.com/account`;
+	public async getUsername(headers: HeadersInit = this.instance.headers): Promise<string> {
+		const res = await fetch(`https://playerservers.com`, { headers: headers });
+		const html = await res.text();
 
-			const res = await fetch(url, { headers: headers as any });
-			const html = await res.text();
+		const $ = cheerio.load(html);
+		const element = $(`.button.dropdown`);
 
-			const $ = cheerio.load(html);
-			const element = $(`#content > nav > ul > li > a`);
-
-			resolve(element.text().trim());
-		})
+		return element.text().trim().split('\n', 1)[0].trim();
 	}
 }
 
