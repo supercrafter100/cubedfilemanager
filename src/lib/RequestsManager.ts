@@ -40,7 +40,7 @@ export default class RequestManager {
 
 			const url = `https://playerservers.com/dashboard/filemanager/?action=new&dir=/${this.instance.baseDir}/${path}`;
 			spin.start();
-			await fetch(url, { headers: headers as any })
+			await fetch(url, { headers: headers, redirect: 'manual' })
 				.then(async (res) => {
 					// Check if session expired
 					if (res.status === 302) {
@@ -77,9 +77,9 @@ export default class RequestManager {
 
 					await fetch(url, {
 						method: "POST",
-						headers: headers as any,
-						body: params as any
-					}).then(async () => {
+						headers: headers,
+						body: params
+					}).then(async (res) => {
 						spin.stop();
 						this.instance.message_log(`Created file ${fileName}.${fileExtension}`)
 						resolve();
@@ -112,7 +112,7 @@ export default class RequestManager {
 			spin.start();
 			const url = `https://playerservers.com/dashboard/filemanager/?action=new_folder&dir=/${baseDir}${dir}`;
 
-			await fetch(url, { headers: headers as any })
+			await fetch(url, { headers: headers, redirect: 'manual' })
 				.then(async (res) => {
 					// Check if session expired
 					if (res.status === 302) {
@@ -261,24 +261,26 @@ export default class RequestManager {
 
 			// Initial fetch to get the delete token
 			const url = `https://playerservers.com/dashboard/filemanager/&dir=${this.instance.baseDir}/${path}`;
-			const html = await fetch(url, { headers: headers as any }).then((res) => res.text());
+			const html = await fetch(url, { headers: headers }).then((res) => res.text());
 
 			const editToken = getDeleteToken(html);
 			if (editToken == null) {
+				spin.stop();
 				return this.instance.message_error("The delete token could not be retrieved. The HTML of the website likely changed. Please report this to Supercrafter100#6600 on discord.");
 			}
 
 			const deleteURL = "https://playerservers.com/dashboard/filemanager/&action=delete";
 			const params = new URLSearchParams();
-			params.append("targetFile", `/${this.instance.baseDir}/${path}/${name.startsWith('-') ? name : '-' + name}`);
-			params.append("target", `/${this.instance.baseDir}/${path}/${name.startsWith('-') ? name : '-' + name}`);
+			const targetFile = `/${this.instance.baseDir}/${path}/${name}`;
+			params.append("targetFile", targetFile);
+			params.append("target", targetFile);
 			params.append("action", "delete");
 			params.append("token", editToken);
 
 			await fetch(deleteURL, {
-				headers: headers as any,
+				headers: headers,
 				method: "POST",
-				body: params as any
+				body: params
 			})
 				.then(async () => {
 					spin.stop();
@@ -744,7 +746,7 @@ function getFileExtension(fname: string) {
 
 function getDeleteToken(html: string) {
 	const $ = cheerio.load(html);
-	const webJavaScript = $($("script").get()[8]).html();
+	const webJavaScript = $("script:last-of-type").last().html();
 	if (webJavaScript == null) return null;
 
 	// Getting the token (this is really hardcoded but I don't know a more efficient way to extract this)

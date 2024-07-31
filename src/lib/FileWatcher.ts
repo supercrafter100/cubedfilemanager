@@ -19,13 +19,13 @@ export default class FileWatcher {
 
 		const spinner = new Spinner("Enabling file watcher");
 		spinner.start();
-		
+
 		const started = Date.now();
 
 		const watcher = chokidar.watch(this.instance.rootDir, {
 			ignoreInitial: true,
 			ignorePermissionErrors: true,
-			
+
 			awaitWriteFinish: {
 				stabilityThreshold: 50
 			}
@@ -68,7 +68,6 @@ export default class FileWatcher {
 				await this.instance.requestManager.createFile(file, content, this.preparePath(path));
 				this.instance.socketManager?.write("file_create", file, content, this.preparePath(path))
 			} finally {
-				this.instance.headers = {};
 				mutex.release();
 			}
 		});
@@ -135,7 +134,7 @@ export default class FileWatcher {
 		})
 	}
 
-    private preparePath(path: string) : string {
+	private preparePath(path: string): string {
 		const updatedBasePath = (this.instance.rootDir).replaceAll("/", "\\");
 		const updatedPath = path.replaceAll('/', '\\');
 
@@ -143,10 +142,10 @@ export default class FileWatcher {
 		if (newPath.endsWith('\\')) {
 			newPath = newPath.substr(0, newPath.length - 1).slice(1);
 		} if (newPath.startsWith('\\')) {
-            newPath = newPath.substr(1)
-        } if (newPath.includes('\\\\')) {
-            newPath = newPath.replaceAll('\\\\', '\\')
-        }
+			newPath = newPath.substr(1)
+		} if (newPath.includes('\\\\')) {
+			newPath = newPath.replaceAll('\\\\', '\\')
+		}
 		return newPath
 	}
 }
