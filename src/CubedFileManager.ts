@@ -29,7 +29,7 @@ export default class CubedFileManager {
 
 	public rootDir: string
 	public arguments: ParsedArgs;
-	
+
 	public sessionToken: string;
 	public headers!: HeadersInit;
 	public folderSupport: boolean = false;
@@ -39,7 +39,7 @@ export default class CubedFileManager {
 
 	public temp_username: string | undefined;
 	public temp_password: string | undefined;
-	public temp_server: number | undefined;
+	public temp_server: string | undefined;
 
 	public cf_clearance: string | undefined;
 	public userAgent: string;
@@ -81,7 +81,7 @@ export default class CubedFileManager {
 
 		if (this.arguments.foldersupport || this.arguments.fs || this.settingsManager.settings?.folderSupport) {
 			this.folderSupport = true;
-		} 
+		}
 
 		if (this.arguments.logerrors || this.arguments.logerr || this.settingsManager.settings?.logErrors) {
 			this.logErrors = true;
@@ -94,7 +94,7 @@ export default class CubedFileManager {
 		}
 	}
 
-	private async init(failed = false) : Promise<any> {
+	private async init(failed = false): Promise<any> {
 
 		/**
 		 * Logging into their account & getting a session ID
@@ -126,7 +126,7 @@ export default class CubedFileManager {
 				password = this.settingsManager.settings?.login?.password
 			}
 		}
-		
+
 		if (!username || !password) {
 			this.message_error('No username or password was found. Please try again.');
 			process.exit(0);
@@ -157,7 +157,7 @@ export default class CubedFileManager {
 				this.cryptoManager.updateStorage();
 			}
 		}
-	
+
 		this.sessionToken = response;
 		this.headers = {
 			cookie: `PHPSESSID=${response}; ${this.cf_clearance ? `cf_clearance=${this.cf_clearance}` : ``}`,
@@ -179,7 +179,12 @@ export default class CubedFileManager {
 
 				server_selected = true;
 			}
-		}	
+		}
+
+		if (servers_list.length === 0) {
+			this.message_error('No servers could be found associated with your account.');
+			return;
+		}
 
 		if (!server_selected) {
 			const server_name = await select({
@@ -191,7 +196,7 @@ export default class CubedFileManager {
 
 			const server = servers_list.find(c => c.name.toLowerCase() === server_name.toLowerCase());
 			this.temp_server = server?.id!;
-			this.requestManager.selectServer(server?.id!);
+			await this.requestManager.selectServer(server?.id!);
 		}
 
 		this.message_success(`Successfully selected a server to work on`);
@@ -216,11 +221,18 @@ export default class CubedFileManager {
 			await uploader.uploadsFiles(this.rootDir);
 			process.exit(0);
 		}
-		else if (this.arguments.sync) {
+		else if (this.arguments.sync || this.settingsManager.settings?.autoSync) {
+			if (this.settingsManager.settings?.autoSync) {
+				this.message_info("autoSync is enabled in CubedCraft.json")
+			}
+
 			this.message_info("Starting to download all scripts from the server...");
 			const downloader = new FileDownloader(this);
 			await downloader.downloadFiles("");
-			process.exit(0);
+			this.message_success("All files were downloaded")
+			if (this.arguments.sync) {
+				process.exit(0);
+			}
 		} else if (this.arguments.delete) {
 			this.message_info("Deleting all scripts in the scripts folder...");
 			await deleteScriptsFolder(this);
@@ -234,14 +246,6 @@ export default class CubedFileManager {
 			this.message_info("Deleting all default scripts on the server...");
 			await deleteDefaultScripts(this);
 			process.exit(0);
-		}
-		
-		if (this.settingsManager.settings?.autoSync) {
-			this.message_info("autoSync is enabled in CubedCraft.json")
-			this.message_info("Starting to download all scripts from the server...");
-			const downloader = new FileDownloader(this);
-			await downloader.downloadFiles("");
-			this.message_success("All files were downloaded")
 		}
 
 		if (this.arguments.livesync || this.settingsManager.settings?.livesync) {
@@ -298,7 +302,7 @@ export default class CubedFileManager {
 		})
 	}
 
-	private askLiveSyncPermission() : Promise<boolean> {
+	private askLiveSyncPermission(): Promise<boolean> {
 		return new Promise(async (resolve) => {
 			const path = join(import.meta.dirname, './sync_permission')
 			if (existsSync(path)) return resolve(true);
@@ -316,59 +320,25 @@ export default class CubedFileManager {
 		})
 	}
 
-	public ask2FACode(html: string, cookie: string) : Promise<void> {
-		return new Promise(async (resolve) => {
-			
-			// ask code
-			const response = await normalQuestion("Enter 2FA code from your authenticator app: ");
+	public async ask2FACode(html: string, cookie: string): Promise<void> {
+		// ask code
+		const response = await normalQuestion("Enter 2FA code from your authenticator app: ");
 
-			// Attempt to run it through the 2FA stuff
-			const success = await this.requestManager.submit2FACode(response, html, {
-				'cookie': `PHPSESSID=${cookie}; ${this.cf_clearance ? `cf_clearance=${this.cf_clearance}` : ``}`,
-				'user-agent': this.userAgent
-			});
-			if (!success) {
-				this.message_error("Invalid 2FA code. Please try again...");
-				return resolve(await this.ask2FACode(html, cookie));
-			}
-			resolve();
-		})
-	}
-
-
-	/**
-	 * Session verification
-	 */
-
-	public async check_session() {
-		const expired = await this.requestManager.sessionIsExpired();
-		if (expired) {
-			this.message_info('Current session expired. Refreshing it!');
-			if (!this.temp_server || !this.temp_password || !this.temp_username) {
-				this.message_error('Failed to log back in. Closing system.');
-				process.exit(0);
-			}
-			const response = await this.requestManager.login(this.temp_username, this.temp_password);
-
-			if (response == null) {
-				this.message_error('Failed to log back in. Closing system.');
-				process.exit(0);
-			}
-
-			await this.requestManager.selectServer(this.temp_server);
-
-			this.sessionToken = response!;
-			this.headers = {
-				cookie: `PHPSESSID=${response}; ${this.cf_clearance ? `cf_clearance=${this.cf_clearance}` : ``}`,
-				'user-agent': this.userAgent
-			}
+		// Attempt to run it through the 2FA stuff
+		const success = await this.requestManager.submit2FACode(response, html, {
+			'cookie': `PHPSESSID=${cookie}; ${this.cf_clearance ? `cf_clearance=${this.cf_clearance}` : ``}`,
+			'user-agent': this.userAgent
+		});
+		if (!success) {
+			this.message_error("Invalid 2FA code. Please try again...");
+			return await this.ask2FACode(html, cookie);
 		}
 	}
 
 	/*
 		Fix paths to be compliant with how Cubed handles paths
 	*/
-	public fixPath(path: string) : string {
+	public fixPath(path: string): string {
 		path = path.replaceAll('\\', '/')
 		if (path.endsWith('/')) path = path.slice(0, path.length - 1)
 		if (!path.startsWith('/')) path = '/' + path
@@ -399,7 +369,7 @@ export default class CubedFileManager {
 		console.log(chalk.grey(`[`) + chalk.blue(`${new Date(Date.now()).toLocaleTimeString()}`) + chalk.grey(']') + " " + msg);
 	}
 
-	public isAllowedExtension(name: string) : boolean {
+	public isAllowedExtension(name: string): boolean {
 		let isAllowed = false;
 		for (const extension of this.settingsManager.settings!.extensions) {
 			if (name.endsWith(extension)) isAllowed = true;

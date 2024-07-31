@@ -4,9 +4,3 @@ export enum LoginMethods {
 	AUTOMATIC,
 	CUSTOM
 }
-
-export enum ResponseTypes {
-	SUCCESS,
-	TFA,
-	FAILURE
-}

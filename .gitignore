@@ -2,3 +2,4 @@ dist/
 CubedCraft.json
 test/
 node_modules/
+src/lib/data.json
