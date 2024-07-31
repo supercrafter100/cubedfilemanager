@@ -600,43 +600,39 @@ export default class RequestManager {
 	 * Get all servers the user has access to on their file manager
 	 * @returns Array of all servers the user has access to
 	 */
-	public getServersInDashboard(): Promise<{ name: string, id: number }[]> {
-		return new Promise(async (resolve) => {
-			const headers = this.instance.headers;
-			const url = 'https://playerservers.com/account';
-			await fetch(url, {
-				headers: headers as any
-			})
-				.then((res) => res.text())
-				.then(async (html) => {
-
-					const links = [];
-					const names: string[] = [];
-					const hrefs: string[] = [];
-
-					const $ = cheerio.load(html);
-					$('tr > td:nth-child(1)').each((index, element) => {
-						const name = $(element).text();
-						names.push(name);
-					})
-
-					$('tr > td:nth-child(4) > a, tr > td:nth-child(6) > a').each((index, element) => {
-						const href = $(element).attr('href');
-						if (href) {
-							hrefs.push(href);
-						}
-					})
-
-					for (let i = 0; i < names.length; i++) {
-						const name = names[i];
-						const id = parseInt(hrefs[i].split('?s=')[1]);
-
-						links.push({ name: name, id: id })
-					}
-
-					resolve(links);
-				})
+	public async getServersInDashboard(): Promise<{ name: string, id: string }[]> {
+		const headers = this.instance.headers;
+		const url = 'https://playerservers.com/dashboard';
+		const resp = await fetch(url, {
+			headers: headers as any
 		})
+		const html = await resp.text();
+
+		const links = [];
+		const names: string[] = [];
+		const hrefs: string[] = [];
+
+		const $ = cheerio.load(html);
+		$('tr > td:nth-child(1)').each((index, element) => {
+			const name = $(element).text();
+			names.push(name);
+		})
+
+		$('tr > td:nth-child(4) > a, tr > td:nth-child(6) > a').each((index, element) => {
+			const href = $(element).attr('href');
+			if (href) {
+				hrefs.push(href);
+			}
+		})
+
+		for (let i = 0; i < names.length; i++) {
+			const name = names[i].trim();
+			const id = hrefs[i].split('?s=')[1];
+
+			links.push({ name: name, id: id })
+		}
+
+		return links;
 	}
 
 	/**
@@ -644,13 +640,10 @@ export default class RequestManager {
 	 * @param id The server ID to select
 	 * @returns A promise that resolves when the server is selected
 	 */
-	public selectServer(id: number): Promise<void> {
-		return new Promise(async (resolve) => {
-			const url = `https://playerservers.com/dashboard/?s=${id}`;
-			await fetch(url, {
-				headers: this.instance.headers as any
-			})
-			resolve();
+	public async selectServer(id: string): Promise<void> {
+		const url = `https://playerservers.com/dashboard/overview/?s=${id}`;
+		await fetch(url, {
+			headers: this.instance.headers as any
 		})
 	}
 

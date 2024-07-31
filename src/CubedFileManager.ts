@@ -39,7 +39,7 @@ export default class CubedFileManager {
 
 	public temp_username: string | undefined;
 	public temp_password: string | undefined;
-	public temp_server: number | undefined;
+	public temp_server: string | undefined;
 
 	public cf_clearance: string | undefined;
 	public userAgent: string;
@@ -181,6 +181,11 @@ export default class CubedFileManager {
 			}
 		}
 
+		if (servers_list.length === 0) {
+			this.message_error('No servers could be found associated with your account.');
+			return;
+		}
+
 		if (!server_selected) {
 			const server_name = await select({
 				pageSize: 5,
@@ -191,7 +196,7 @@ export default class CubedFileManager {
 
 			const server = servers_list.find(c => c.name.toLowerCase() === server_name.toLowerCase());
 			this.temp_server = server?.id!;
-			this.requestManager.selectServer(server?.id!);
+			await this.requestManager.selectServer(server?.id!);
 		}
 
 		this.message_success(`Successfully selected a server to work on`);
@@ -216,11 +221,18 @@ export default class CubedFileManager {
 			await uploader.uploadsFiles(this.rootDir);
 			process.exit(0);
 		}
-		else if (this.arguments.sync) {
+		else if (this.arguments.sync || this.settingsManager.settings?.autoSync) {
+			if (this.settingsManager.settings?.autoSync) {
+				this.message_info("autoSync is enabled in CubedCraft.json")
+			}
+
 			this.message_info("Starting to download all scripts from the server...");
 			const downloader = new FileDownloader(this);
 			await downloader.downloadFiles("");
-			process.exit(0);
+			this.message_success("All files were downloaded")
+			if (this.arguments.sync) {
+				process.exit(0);
+			}
 		} else if (this.arguments.delete) {
 			this.message_info("Deleting all scripts in the scripts folder...");
 			await deleteScriptsFolder(this);
@@ -234,14 +246,6 @@ export default class CubedFileManager {
 			this.message_info("Deleting all default scripts on the server...");
 			await deleteDefaultScripts(this);
 			process.exit(0);
-		}
-
-		if (this.settingsManager.settings?.autoSync) {
-			this.message_info("autoSync is enabled in CubedCraft.json")
-			this.message_info("Starting to download all scripts from the server...");
-			const downloader = new FileDownloader(this);
-			await downloader.downloadFiles("");
-			this.message_success("All files were downloaded")
 		}
 
 		if (this.arguments.livesync || this.settingsManager.settings?.livesync) {
