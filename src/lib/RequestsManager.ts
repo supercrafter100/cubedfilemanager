@@ -629,7 +629,7 @@ export default class RequestManager {
 
 		for (let i = 0; i < names.length; i++) {
 			const name = names[i].trim();
-			const id = hrefs[i].split('?s=')[1];
+			const id = hrefs[i]?.split('?s=')[1] || null!;
 
 			links.push({ name: name, id: id })
 		}
