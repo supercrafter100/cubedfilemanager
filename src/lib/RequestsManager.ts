@@ -1,4 +1,4 @@
-import cheerio from "cheerio";
+import * as cheerio from "cheerio";
 import CubedFileManager from "../CubedFileManager.js";
 import getSkriptErrors from '../util/getSkriptErrors.js';
 import normalQuestion from "../questions/normalQuestion.js";
@@ -7,6 +7,7 @@ import Spinner from "../util/Spinner.js";
 export default class RequestManager {
 
 	private instance: CubedFileManager;
+	private IGNORED_SERVER_NAMES = ["Visit Patreon"];
 
 	constructor(instance: CubedFileManager) {
 		this.instance = instance;
@@ -615,7 +616,7 @@ export default class RequestManager {
 		const hrefs: string[] = [];
 
 		const $ = cheerio.load(html);
-		$('tr > td:nth-child(1)').each((index, element) => {
+		$('div.table-responsive > table > tbody > tr > td:nth-child(1)').each((index, element) => {
 			const name = $(element).text();
 			names.push(name);
 		})
@@ -629,8 +630,9 @@ export default class RequestManager {
 
 		for (let i = 0; i < names.length; i++) {
 			const name = names[i].trim();
-			const id = hrefs[i].split('?s=')[1];
+			if (this.IGNORED_SERVER_NAMES.includes(name)) continue;
 
+			const id = hrefs[i].split('?s=')[1];
 			links.push({ name: name, id: id })
 		}
 
